@@ -1,0 +1,13 @@
+curl -X POST http://20.117.181.22:5111/mint \                                                                           ─╯
+  -F "file=@/Users/abdulaaqib/Downloads/pngimg.com - sonic_hedgehog_PNG29.png" \
+  -F "contractName=SegaUNLEASHED" \
+  -F "contractAddress=0x7c07D424Ae33E50FCFf597bD70a9B634f9Fe48cB" \
+  -F "recipient=0x1a0a593AA9206c55b05Da21E048a456258Ee02Dc" \
+  -F "tokenId=4" \
+  -F 'traits={
+    "Character":"Sonic",
+    "Background":"Green Hill",
+    "Aura":"Blue Glow",
+    "Gear":"Speed Shoes",
+    "Rarity":"Legendary"
+  };type=application/json'

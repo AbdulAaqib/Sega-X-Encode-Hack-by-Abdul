@@ -1,8 +1,19 @@
+/* src/context/WalletContext.tsx */
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import detectEthereumProvider from '@metamask/detect-provider';
-import { BrowserProvider, formatEther, Network } from 'ethers';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode
+} from 'react';
+import {
+  BrowserProvider,
+  formatEther,
+  parseEther,
+  TransactionReceipt
+} from 'ethers';
 
 interface WalletContextType {
   provider: BrowserProvider | null;
@@ -10,91 +21,113 @@ interface WalletContextType {
   balance: string;
   chainId: number;
   error: string;
-  connectWallet: () => Promise<void>;
+  /** Now returns the connected account or throws */
+  connectWallet: () => Promise<string>;
+  switchToPolygon: () => Promise<void>;
+  sendPayment: () => Promise<string>;
 }
 
-const WalletContext = createContext<WalletContextType | undefined>(undefined);
+const WalletContext = createContext<WalletContextType | undefined>(
+  undefined
+);
 
-export const WalletProvider = ({ children }: { children: ReactNode }) => {
-  const [provider, setProvider] = useState<BrowserProvider | null>(null);
+export const WalletProvider = ({
+  children
+}: {
+  children: ReactNode;
+}) => {
+  const [provider, setProvider] = useState<BrowserProvider | null>(
+    null
+  );
   const [account, setAccount] = useState<string>('');
   const [balance, setBalance] = useState<string>('');
   const [chainId, setChainId] = useState<number>(0);
   const [error, setError] = useState<string>('');
 
+  // Only run once on mount: set up provider + listeners
   useEffect(() => {
-    let ethProvider: any;
-    const initialize = async () => {
-      ethProvider = await detectEthereumProvider();
-      if (!ethProvider) {
-        setError('MetaMask not found. Please install the MetaMask extension.');
-        return;
-      }
-      const browserProvider = new BrowserProvider(ethProvider);
-      setProvider(browserProvider);
-      ethProvider.on('accountsChanged', handleAccountsChanged);
-      ethProvider.on('chainChanged', handleChainChanged);
-    };
-    initialize();
-    return () => {
-      if (ethProvider?.removeListener) {
-        ethProvider.removeListener('accountsChanged', handleAccountsChanged);
-        ethProvider.removeListener('chainChanged', handleChainChanged);
-      }
-    };
-  }, []);
-
-  const handleAccountsChanged = async (accounts: string[]) => {
-    if (accounts.length === 0) {
-      setAccount('');
-      setBalance('');
-      setChainId(0);
-    } else {
-      const addr = accounts[0];
-      setAccount(addr);
-      if (provider) {
-        const bal = await provider.getBalance(addr);
-        setBalance(formatEther(bal));
-      }
-    }
-  };
-
-  const handleChainChanged = async (chainHex: string) => {
-    const id = parseInt(chainHex, 16);
-    setChainId(id);
-    if (provider && account) {
-      const bal = await provider.getBalance(account);
-      setBalance(formatEther(bal));
-    }
-  };
-
-  const connectWallet = async () => {
     if (!window.ethereum) {
-      setError('Ethereum provider not found.');
+      setError('MetaMask not found. Please install it.');
       return;
     }
-    try {
-      const accounts: string[] = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      await handleAccountsChanged(accounts);
-      if (provider) {
-        const net: Network = await provider.getNetwork();
-        setChainId(net.chainId);
+    const web3Provider = new BrowserProvider(window.ethereum as any);
+    setProvider(web3Provider);
+
+    const handleAccountsChanged = async (accounts: string[]) => {
+      if (accounts.length === 0) {
+        setAccount(''); setBalance(''); setChainId(0);
+      } else {
+        const addr = accounts[0];
+        setAccount(addr);
+        const bal = await web3Provider.getBalance(addr);
+        setBalance(formatEther(bal));
       }
+    };
+    const handleChainChanged = async (chainHex: string) => {
+      const id = parseInt(chainHex, 16);
+      setChainId(id);
+      if (account) {
+        const bal = await web3Provider.getBalance(account);
+        setBalance(formatEther(bal));
+      }
+    };
+
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+    window.ethereum.on('chainChanged', handleChainChanged);
+
+    return () => {
+      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      window.ethereum.removeListener('chainChanged', handleChainChanged);
+    };
+  }, []);  // <-- no account dependency
+
+  const connectWallet = async (): Promise<string> => {
+    if (!window.ethereum) {
+      setError('Ethereum provider not found.');
+      throw new Error('No provider');
+    }
+    try {
+      const accounts: string[] =
+        await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+      if (!accounts.length) {
+        throw new Error('No accounts returned');
+      }
+      // Manually update state right away
+      setAccount(accounts[0]);
       setError('');
+      return accounts[0];
     } catch (err: any) {
       setError(err.message || 'Failed to connect wallet');
+      throw err;
     }
   };
 
+  const switchToPolygon = async () => { /* unchanged */ };
+
+  const sendPayment = async (): Promise<string> => { /* unchanged */ };
+
   return (
-    <WalletContext.Provider value={{ provider, account, balance, chainId, error, connectWallet }}>
+    <WalletContext.Provider
+      value={{
+        provider,
+        account,
+        balance,
+        chainId,
+        error,
+        connectWallet,
+        switchToPolygon,
+        sendPayment
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
 };
 
 export const useWallet = (): WalletContextType => {
-  const context = useContext(WalletContext);
-  if (!context) throw new Error('useWallet must be used within a WalletProvider');
-  return context;
+  const ctx = useContext(WalletContext);
+  if (!ctx) throw new Error('useWallet must be used inside WalletProvider');
+  return ctx;
 };

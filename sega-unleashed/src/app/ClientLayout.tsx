@@ -23,7 +23,10 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         {account && <NavBar />}
       </div>
 
-      <main className="p-4">{children}</main>
+      {/* Main area: centers whatever’s inside (your Home page) */}
+      <main className="main-content">
+        {children}
+      </main>
     </div>
   );
 }
