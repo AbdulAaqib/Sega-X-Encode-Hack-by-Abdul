@@ -95,11 +95,14 @@ app.post("/mint", async (req, res) => {
       return res.status(400).json({ error: "Missing recipient or packType" });
     }
 
+    // Normalize recipient address to lowercase for database
+    const recipientAddress = recipient.toLowerCase();
+
     const packType = traits.packType;
     const pack = PACKS[packType];
     if (!pack) return res.status(400).json({ error: `Unknown packType: ${packType}` });
 
-    console.log(`Minting ${packType} pack for ${recipient}`);
+    console.log(`Minting ${packType} pack for ${recipientAddress}`);
 
     // Pinata credentials
     const pinataKey = process.env.PINATA_API_KEY;
@@ -154,21 +157,25 @@ app.post("/mint", async (req, res) => {
         const metadataUri = `https://gateway.pinata.cloud/ipfs/${pinMeta.data.IpfsHash}`;
 
         // On-chain mint
-        const txHash = await mintOnContract(recipient, currentId, metadataUri);
+        const txHash = await mintOnContract(recipientAddress, currentId, metadataUri);
         updateTokenId(currentId);
 
-        // Database inserts
+        // Database inserts: use lowercase address
         await supabase.from('nfts').insert({ nft_id: currentId, nft_data: metadata }).single();
-        const { data: existing } = await supabase.from('user_data').select('data').eq('wallet_address', recipient).single();
+        const { data: existing } = await supabase
+          .from('user_data')
+          .select('data')
+          .eq('wallet_address', recipientAddress)
+          .single();
         const userTokenIds = (existing?.data || []);
         userTokenIds.push(currentId);
-        await supabase.from('user_data').upsert({ wallet_address: recipient, data: userTokenIds });
+        await supabase.from('user_data').upsert({ wallet_address: recipientAddress, data: userTokenIds });
 
         mintedIds.push(currentId);
       }
     }
 
-    console.log(`Completed ${mintedIds.length} mints for ${recipient}`);
+    console.log(`Completed ${mintedIds.length} mints for ${recipientAddress}`);
     res.json(mintedIds);
   } catch (err) {
     console.error("Mint error:", err);
