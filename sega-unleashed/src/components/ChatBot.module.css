@@ -1,0 +1,142 @@
+/* File: src/components/ChatBot.module.css */
+
+/* Centering wrapper */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  min-height: 100vh;
+  background: transparent;
+}
+
+/* Iridescent glass container */
+@keyframes hueShift {
+  0%   { filter: hue-rotate(0deg); }
+  50%  { filter: hue-rotate(180deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes gradientMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,0.03);      /* more transparent */
+  backdrop-filter: blur(20px);
+  border-radius: 2rem;
+  box-shadow: 0 0 40px rgba(255,255,255,0.05);
+  overflow: hidden;
+  animation: hueShift 20s linear infinite;
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(
+    60deg,
+    #ff4ec0,
+    #4eafff,
+    #4eff9d,
+    #ffdd4e,
+    #ff4ec0
+  );
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite, hueShift 20s linear infinite;
+  mix-blend-mode: overlay;
+}
+
+/* Scrollable chat area */
+.chatWindow {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 1;
+}
+
+/* Base for message bubbles */
+.bubbleBase {
+  max-width: 75%;
+  padding: 0.75rem 1rem;
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  position: relative;
+}
+
+/* Left (bot) bubble */
+.bubbleLeft {
+  composes: bubbleBase;
+  align-self: flex-start;
+  background: rgba(255,255,255,0.1);      /* more transparent */
+  border-top-left-radius: 0;
+}
+
+/* Right (player) bubble */
+.bubbleRight {
+  composes: bubbleBase;
+  align-self: flex-end;
+  background: rgba(0,200,255,0.15);       /* more transparent */
+  border-top-right-radius: 0;
+}
+
+/* Status bar */
+.statusBar {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  color: white;
+  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.2);            /* more transparent */
+  z-index: 1;
+}
+
+/* Options row */
+.optionsBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1rem;
+  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.15);           /* more transparent */
+  z-index: 1;
+}
+
+/* Buttons */
+.optionButton {
+  flex: 1;
+  min-width: 45%;
+  padding: 0.6rem 0.8rem;
+  font-weight: bold;
+  color: white;
+  background: rgba(255,255,255,0.1);      /* more transparent */
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.optionButton:hover:not(:disabled) {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+
+.optionButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

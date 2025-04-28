@@ -7,8 +7,8 @@ import React from 'react';
 export default function NavBar() {
   const pathname = usePathname();
   const links = [
-    { href: '/packs', label: 'Pack Openings' },
-    { href: '/battles', label: 'Geminin Battles' },
+    { href: '/packs', label: 'Buy Packs' },
+    { href: '/battles', label: 'Battle' },
     { href: '/leaderboard', label: 'Leaderboard' },
   ];
 

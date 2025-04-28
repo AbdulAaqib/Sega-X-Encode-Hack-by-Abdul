@@ -120,10 +120,14 @@ export const WalletProvider = ({
         switchToPolygon,
         sendPayment
       }}
+      
     >
+      
       {children}
     </WalletContext.Provider>
+    
   );
+  
 };
 
 export const useWallet = (): WalletContextType => {

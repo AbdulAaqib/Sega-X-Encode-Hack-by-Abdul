@@ -1,32 +1,67 @@
-// app/ClientLayout.tsx
+// src/app/ClientLayout.tsx
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useWallet } from '@/context/WalletContext';
 import NavBar from '@/components/NavBar';
 
+export let globalWalletAddress = '';
+
+declare global {
+  interface Window {
+    globalWalletAddress?: string;
+  }
+}
+
 export default function ClientLayout({ children }: { children: ReactNode }) {
   const { account, balance } = useWallet();
+  const [localWalletAddress, setLocalWalletAddress] = useState('');
+
+  useEffect(() => {
+    if (!account) return;
+    globalWalletAddress = account;
+    if (typeof window !== 'undefined') {
+      window.globalWalletAddress = account;
+    }
+    setLocalWalletAddress(account);
+    console.log('🌐 globalWalletAddress set to', account);
+  }, [account]);
+
+  useEffect(() => {
+    if (!localWalletAddress) return;
+
+    (async () => {
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wallet_address: localWalletAddress }),
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          console.error('❌ chat error:', json);
+        } else {
+          console.log('✅ Wallet saved:', json.user);
+        }
+      } catch (e) {
+        console.error('❌ Failed to send wallet:', e);
+      }
+    })();
+  }, [localWalletAddress]);
 
   return (
     <div className="layout-container">
-      {/* Top bar with account info and navbar */}
       <div className="top-bar flex justify-between items-center p-4 bg-gray-100">
-        {account ? (
+        {localWalletAddress && (
           <div className="account-info text-sm">
-            <span className="mr-2">
-              {account.substring(0, 6)}...{account.substring(account.length - 4)}
-            </span>
-            <span>{parseFloat(balance).toFixed(4)} ETH</span>
+            <span className="mr-2">{localWalletAddress}</span>
+            <span>{balance ? parseFloat(balance).toFixed(4) : '0.0000'} ETH</span>
           </div>
-        ) : null}
-        {account && <NavBar />}
+        )}
+        {localWalletAddress && <NavBar />}
       </div>
-
-      {/* Main area: centers whatever’s inside (your Home page) */}
-      <main className="main-content">
-        {children}
-      </main>
+      <main className="main-content">{children}</main>
     </div>
   );
 }

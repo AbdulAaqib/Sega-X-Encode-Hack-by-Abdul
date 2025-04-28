@@ -39,7 +39,6 @@ async function startPayment({ setError, setTxs, amount }: PaymentHandlers) {
 export default function PackOpenings() {
   const [error, setError] = useState<string>('');
   const [txs, setTxs] = useState<TransactionResponse[]>([]);
-  const [packs, setPacks] = useState<number[][]>([]);
   const [selectedTier, setSelectedTier] = useState(PACK_TIERS[0].amount);
   const [mintedIds, setMintedIds] = useState<number[]>([]);
 
@@ -51,10 +50,6 @@ export default function PackOpenings() {
 
     try {
       const tx = await startPayment({ setError, setTxs, amount: selectedTier });
-
-      // Generate and display pack
-      const newPack = Array.from({ length: 5 }, () => Math.floor(Math.random() * 100));
-      setPacks(prev => [...prev, newPack]);
 
       // Prepare JSON payload for server
       const payload = {
@@ -117,13 +112,6 @@ export default function PackOpenings() {
               <strong>Minted Token IDs:</strong> {mintedIds.join(', ')}
             </div>
           )}
-          <div className="mt-4 space-y-2">
-            {packs.map((pack, i) => (
-              <div key={i} className="p-2 border rounded">
-                <strong>Pack {i + 1} ({pack.length} items):</strong> {pack.join(', ')}
-              </div>
-            ))}
-          </div>
         </footer>
       </div>
     </form>
