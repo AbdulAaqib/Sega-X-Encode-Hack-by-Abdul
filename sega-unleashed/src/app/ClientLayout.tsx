@@ -29,7 +29,6 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!localWalletAddress) return;
-
     (async () => {
       try {
         const res = await fetch('/api/chat', {
@@ -37,13 +36,9 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ wallet_address: localWalletAddress }),
         });
-
         const json = await res.json();
-        if (!res.ok) {
-          console.error('❌ chat error:', json);
-        } else {
-          console.log('✅ Wallet saved:', json.user);
-        }
+        if (!res.ok) console.error('❌ chat error:', json);
+        else console.log('✅ Wallet saved:', json.user);
       } catch (e) {
         console.error('❌ Failed to send wallet:', e);
       }
@@ -52,15 +47,8 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="layout-container">
-      <div className="top-bar flex justify-between items-center p-4 bg-gray-100">
-        {localWalletAddress && (
-          <div className="account-info text-sm">
-            <span className="mr-2">{localWalletAddress}</span>
-            <span>{balance ? parseFloat(balance).toFixed(4) : '0.0000'} ETH</span>
-          </div>
-        )}
-        {localWalletAddress && <NavBar />}
-      </div>
+      {/* NavBar now includes account info */}
+      <NavBar />
       <main className="main-content">{children}</main>
     </div>
   );

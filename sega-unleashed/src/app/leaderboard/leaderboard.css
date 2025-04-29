@@ -1,0 +1,92 @@
+/* styles/leaderboard.css */
+
+/* 
+  Push further down (100px), narrow the window (max-width: 400px),
+  leave a 1rem gap on the left, and scroll inside the container if needed.
+*/
+.leaderboard-page {
+  margin-top: 100px;                /* further below navbar */
+  height: calc(100vh - 100px);      /* fill remaining space */
+  overflow-y: auto;                 /* scroll when overflowing */
+
+  padding: 1rem;
+  max-width: 400px;                 /* narrower panel */
+
+  /* left-align with a small gap */
+  margin-left: 1rem;
+  margin-right: auto;
+
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradient 30s ease infinite;
+
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+/* Gradient keyframes */
+@keyframes gradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.leader-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;                 /* slightly tighter padding */
+  margin-bottom: 0.75rem;
+
+  background-color: rgba(146, 174, 227, 0.44);
+  backdrop-filter: blur(18px) saturate(200%);
+  -webkit-backdrop-filter: blur(18px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.125);
+  border-radius: 12px;
+}
+
+.leaderboard-page h2 {
+  font-size: 1.5rem;                /* smaller heading */
+  color: #fff;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.rank {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #fff;
+  width: 1.8rem;
+}
+
+.address {
+  flex: 1;
+  margin: 0 0.75rem;
+  font-family: monospace;
+  color: #f0f0f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wins {
+  font-weight: 500;
+  color: #fff;
+}
+
+.loading,
+.error {
+  margin-top: 120px;                /* ensure below navbar */
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: #e53e3e;
+}

@@ -1,15 +1,5 @@
 /* File: src/components/ChatBot.module.css */
 
-/* Centering wrapper */
-.wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  min-height: 100vh;
-  background: transparent;
-}
-
 /* Iridescent glass container */
 @keyframes hueShift {
   0%   { filter: hue-rotate(0deg); }
@@ -30,10 +20,9 @@
   height: 80vh;
   display: flex;
   flex-direction: column;
-  background: rgba(255,255,255,0.03);      /* more transparent */
+  background: rgba(255, 255, 255, 0);      /* fully transparent interior */
   backdrop-filter: blur(20px);
   border-radius: 2rem;
-  box-shadow: 0 0 40px rgba(255,255,255,0.05);
   overflow: hidden;
   animation: hueShift 20s linear infinite;
 }
@@ -45,11 +34,11 @@
   width: 200%; height: 200%;
   background: linear-gradient(
     60deg,
-    #ff4ec0,
-    #4eafff,
-    #4eff9d,
-    #ffdd4e,
-    #ff4ec0
+    #ff4ec137,
+    #4eafff33,
+    #4eff9e5d,
+    #ffdc4e50,
+    #ff4ec145
   );
   background-size: 400% 400%;
   animation: gradientMove 15s ease infinite, hueShift 20s linear infinite;
@@ -81,7 +70,7 @@
 .bubbleLeft {
   composes: bubbleBase;
   align-self: flex-start;
-  background: rgba(255,255,255,0.1);      /* more transparent */
+  background: rgba(255,255,255,0.1);      /* very translucent */
   border-top-left-radius: 0;
 }
 
@@ -89,7 +78,7 @@
 .bubbleRight {
   composes: bubbleBase;
   align-self: flex-end;
-  background: rgba(0,200,255,0.15);       /* more transparent */
+  background: rgba(0,200,255,0.15);       /* very translucent */
   border-top-right-radius: 0;
 }
 
@@ -101,7 +90,7 @@
   font-weight: 600;
   color: white;
   backdrop-filter: blur(10px);
-  background: rgba(0,0,0,0.2);            /* more transparent */
+  background: rgba(0,0,0,0.2);            /* very translucent */
   z-index: 1;
 }
 
@@ -112,7 +101,7 @@
   gap: 0.5rem;
   padding: 1rem;
   backdrop-filter: blur(10px);
-  background: rgba(0,0,0,0.15);           /* more transparent */
+  background: rgba(0,0,0,0.15);           /* very translucent */
   z-index: 1;
 }
 
@@ -123,7 +112,7 @@
   padding: 0.6rem 0.8rem;
   font-weight: bold;
   color: white;
-  background: rgba(255,255,255,0.1);      /* more transparent */
+  background: rgba(255,255,255,0.1);      /* very translucent */
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 1rem;
@@ -139,4 +128,19 @@
 .optionButton:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Sega-themed animated background */
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #0033a0, #00b2ff, #ffffff);
+  background-size: 400% 400%;
+  animation: backgroundMove 30s ease infinite;
+}
+
+@keyframes backgroundMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }

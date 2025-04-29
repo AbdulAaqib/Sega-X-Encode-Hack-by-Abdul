@@ -1,4 +1,3 @@
-// File: src/components/ChatBot.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -21,7 +20,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ player }) => {
   const [loading, setLoading] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new message
+  // Auto-scroll
   useEffect(() => {
     if (chatWindowRef.current) {
       chatWindowRef.current.scrollTo({
@@ -31,7 +30,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ player }) => {
     }
   }, [history]);
 
-  // Kick off initial battle/opponent generation
+  // Kick off initial battle
   useEffect(() => {
     sendMessage(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,40 +62,41 @@ const ChatBot: React.FC<ChatBotProps> = ({ player }) => {
   };
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.container}>
-        <div className={styles.chatWindow} ref={chatWindowRef}>
-          {history.map((msg, i) => (
-            <div
-              key={i}
-              className={
-                msg.sender === 'player'
-                  ? styles.bubbleRight
-                  : styles.bubbleLeft
-              }
-            >
-              {msg.text}
-            </div>
-          ))}
-        </div>
+    <div className={styles.container}>
+      {/* Chat message area */}
+      <div className={styles.chatWindow} ref={chatWindowRef}>
+        {history.map((msg, i) => (
+          <div
+            key={i}
+            className={
+              msg.sender === 'player'
+                ? styles.bubbleRight
+                : styles.bubbleLeft
+            }
+          >
+            {msg.text}
+          </div>
+        ))}
+      </div>
 
-        <div className={styles.statusBar}>
-          <span>Player: {health.player} HP</span>
-          <span>Opponent: {health.opponent} HP</span>
-        </div>
+      {/* Status bar */}
+      <div className={styles.statusBar}>
+        <span>Player: {health.player} HP</span>
+        <span>Opponent: {health.opponent} HP</span>
+      </div>
 
-        <div className={styles.optionsBar}>
-          {options.map((opt, idx) => (
-            <button
-              key={idx}
-              disabled={loading}
-              onClick={() => sendMessage(opt)}
-              className={styles.optionButton}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
+      {/* Options/buttons */}
+      <div className={styles.optionsBar}>
+        {options.map((opt, idx) => (
+          <button
+            key={idx}
+            disabled={loading}
+            onClick={() => sendMessage(opt)}
+            className={styles.optionButton}
+          >
+            {opt}
+          </button>
+        ))}
       </div>
     </div>
   );
