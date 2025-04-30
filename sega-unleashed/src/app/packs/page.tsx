@@ -8,7 +8,7 @@ import { DragControls } from "three/examples/jsm/controls/DragControls";
 import { BrowserProvider, getAddress, parseEther, TransactionResponse } from "ethers";
 import ErrorMessage from "./ErrorMessage";
 import TxList from "./TxList";
-import "./styles.css";
+import styles from "./PackOpenings.module.css";
 
 interface PaymentHandlers {
   setError: (msg: string) => void;
@@ -16,26 +16,33 @@ interface PaymentHandlers {
   amount: string;
 }
 
+// Added a free tier that functions like the Bronze tier
 const PACK_TIERS = [
+  { amount: "0",    img: "/Free.png" },
   { amount: "0.01", img: "/BRONZE.png" },
   { amount: "0.05", img: "/SILVER.png" },
   { amount: "0.1",  img: "/GOLD.png"   },
 ];
 
 async function startPayment({ setError, setTxs, amount }: PaymentHandlers) {
-  if (!window.ethereum) {
+  if (amount !== "0" && !window.ethereum) {
     const err = "No crypto wallet found. Please install MetaMask.";
     setError(err);
     throw new Error(err);
   }
   try {
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const recipient = "0xA05228D9D57Fa3D2fc3D33885Ee5E281A94100C9";
-    getAddress(recipient);
-    const tx = await signer.sendTransaction({ to: recipient, value: parseEther(amount) });
-    setTxs([tx]);
+    let tx: TransactionResponse | null = null;
+
+    if (amount !== "0") {
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const recipient = "0xA05228D9D57Fa3D2fc3D33885Ee5E281A94100C9";
+      getAddress(recipient);
+      tx = await signer.sendTransaction({ to: recipient, value: parseEther(amount) });
+      setTxs([tx]);
+    }
+
     setError("");
     return tx;
   } catch (err: any) {
@@ -84,7 +91,6 @@ export default function PackOpenings() {
     dirLight.position.set(0, 10, 0);
     scene.add(dirLight);
 
-    // Load model and enable dragging
     const loader = new GLTFLoader();
     const draggable: THREE.Object3D[] = [];
     loader.load(
@@ -112,7 +118,6 @@ export default function PackOpenings() {
       (err) => console.error("Error loading GLB:", err)
     );
 
-    // Keyboard controls for camera
     let speedH = 0, speedV = 0;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'ArrowLeft') speedH = 0.02;
@@ -127,7 +132,6 @@ export default function PackOpenings() {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
       theta += speedH;
@@ -137,7 +141,6 @@ export default function PackOpenings() {
     };
     animate();
 
-    // Handle window resize
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -160,13 +163,16 @@ export default function PackOpenings() {
     setMintedIds([]);
     try {
       const tx = await startPayment({ setError, setTxs, amount: selectedTier });
+      // Free tier behaves like Bronze
       const tierLabel =
+        selectedTier === '0'    ? 'Bronze' :
         selectedTier === '0.01' ? 'Bronze' :
         selectedTier === '0.05' ? 'Silver' : 'Gold';
+
       const res = await fetch('http://20.117.181.22:5111/mint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipient: tx.from, traits: { packType: tierLabel } }),
+        body: JSON.stringify({ recipient: tx?.from, traits: { packType: tierLabel } }),
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Mint failed');
       const ids: number[] = await res.json();
@@ -185,47 +191,54 @@ export default function PackOpenings() {
 
       <form
         onSubmit={handleSubmit}
-        className="form-glass"
+        className={styles.formGlass}
         style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
           zIndex: 10,
         }}
       >
-        <div className="text-glass" style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="text-glass" style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "1rem" }}>
             {PACK_TIERS.map((tier) => (
               <button
-                key={tier.amount}
+                key={tier.amount + tier.img}
                 type="button"
                 onClick={() => setSelectedTier(tier.amount)}
-                className="btn-glass"
-                style={{ width: '140px', height: '140px', padding: 0 }}
+                className={styles.btnGlass}
+                style={{ width: "140px", height: "140px", padding: 0 }}
               >
                 <img
                   src={tier.img}
                   alt={`${tier.amount} ETH pack`}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: selectedTier === tier.amount ? 1 : 0.5 }}
+                  className={styles.imgReset}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    opacity: selectedTier === tier.amount ? 1 : 0.5,
+                  }}
                 />
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: "center" }}>
           <button
             type="submit"
-            className="btn-glass"
+            className={styles.btnGlass}
             onMouseEnter={() => setBuyHover(true)}
             onMouseLeave={() => setBuyHover(false)}
-            style={{ marginBottom: '1rem' }}
+            style={{ marginBottom: "1rem" }}
           >
             <img
-              src={buyHover ? '/Buy-Pack.png' : '/Buy-a-Pack.png'}
+              src={buyHover ? "/Buy-Pack.png" : "/Buy-a-Pack.png"}
               alt="Buy a Pack"
-              style={{ width: '240px', height: 'auto' }}
+              className={styles.imgReset}
+              style={{ width: "240px", height: "auto" }}
             />
           </button>
 
@@ -233,15 +246,21 @@ export default function PackOpenings() {
           <TxList txs={txs} />
 
           {txs.length > 0 && (
-            <div className="text-glass" style={{ marginTop: '1rem', textAlign: 'left' }}>
+            <div className="text-glass" style={{ marginTop: "1rem", textAlign: "left" }}>
               <strong>Transaction Hash:</strong>
-              <div style={{ marginTop: '0.5rem' }}>
+              <div style={{ marginTop: "0.5rem" }}>
                 <a
                   href={`https://polygonscan.com/tx/${txs[0].hash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-glass"
-                  style={{ position: 'relative', zIndex: 2, textDecoration: 'underline', wordBreak: 'break-all', pointerEvents: 'auto' }}
+                  style={{
+                    position: "relative",
+                    zIndex: 2,
+                    textDecoration: "underline",
+                    wordBreak: "break-all",
+                    pointerEvents: "auto",
+                  }}
                 >
                   https://polygonscan.com/tx/{txs[0].hash}
                 </a>
@@ -252,9 +271,15 @@ export default function PackOpenings() {
           {mintedIds.length > 0 && (
             <div
               className="text-glass"
-              style={{ marginTop: '1rem', padding: '0.5rem', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '8px', background: 'rgba(255,255,255,0.1)' }}
+              style={{
+                marginTop: "1rem",
+                padding: "0.5rem",
+                border: "1px solid rgba(255,255,255,0.4)",
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.1)",
+              }}
             >
-              <strong>Minted Token IDs:</strong> {mintedIds.join(', ')}
+              <strong>Minted Token IDs:</strong> {mintedIds.join(", ")}
             </div>
           )}
         </div>

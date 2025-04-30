@@ -1,10 +1,12 @@
 // src/app/api/chat/route.ts
 
 import { NextResponse } from 'next/server';
-import { AzureOpenAI } from 'openai';
+import { AzureOpenAI, type ChatCompletionRequestMessage } from 'openai';
+
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
-import type { Player, AssistantResponse } from '../types';
+import type { Player, AssistantResponse } from '../../types';
+
 
 // 1) Ensure Supabase env vars are provided
 const supabaseUrl        = process.env.SUPABASE_URL;
@@ -84,7 +86,7 @@ export async function POST(request: Request) {
     6. On battle end, set "game_over": true and "winner" to the name of the victor.
     8. Stay hyped, fun, and in-character as a Sonic arena announcer!`;
 
-    const messages = [
+    const messages: ChatCompletionRequestMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user',   content: JSON.stringify({ player: playerData, wallet_address: wallet }) },
       ...(history ?? [])

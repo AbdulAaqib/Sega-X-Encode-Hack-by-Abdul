@@ -16,6 +16,7 @@ export default function Home() {
   const mountRef = useRef<HTMLDivElement>(null);
   const islandRef = useRef<THREE.Object3D | null>(null);
   const townRef   = useRef<THREE.Object3D | null>(null);
+  const sonicRef  = useRef<THREE.Object3D | null>(null);
 
   // Dev menu and transform state for island
   const [devOpen, setDevOpen] = useState(false);
@@ -93,6 +94,17 @@ export default function Home() {
       townRef.current = m;
     });
 
+    // Load Sonic
+    loader.load('/sonic2.glb', gltf => {
+      const m = gltf.scene;
+      m.scale.set(0.5, 0.5, 0.5);           // adjust size if needed
+      m.position.set(0, -2, -5);      // place in front of camera
+      m.rotation.set(0, Math.PI, 0);  // face the camera
+      m.visible = true;
+      scene.add(m);
+      sonicRef.current = m;
+    });
+
     // Animation + render
     const animate = () => {
       requestAnimationFrame(animate);
@@ -119,6 +131,11 @@ export default function Home() {
             t
           );
         }
+      }
+
+      // Sonic idle rotation
+      if (sonicRef.current) {
+        sonicRef.current.rotation.y += 0.01;
       }
 
       renderer.render(scene, camera);

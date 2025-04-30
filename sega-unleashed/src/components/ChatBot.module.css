@@ -130,17 +130,5 @@
   cursor: not-allowed;
 }
 
-/* Sega-themed animated background */
-body {
-  margin: 0;
-  padding: 0;
-  background: linear-gradient(135deg, #0033a0, #00b2ff, #ffffff);
-  background-size: 400% 400%;
-  animation: backgroundMove 30s ease infinite;
-}
-
-@keyframes backgroundMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
+/* If you ever need a local global override for an element, use :global() */
+/* (but for body, we’ll move it out to globals.css) */

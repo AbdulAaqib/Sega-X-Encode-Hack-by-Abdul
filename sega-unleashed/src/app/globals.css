@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 /* styles/globals.css */
 
 /* Reset + base */
@@ -124,7 +123,12 @@ button:focus:not(:focus-visible) {
   outline: none;
 }
 
-
+/* Sega-themed animated background keyframes */
+@keyframes backgroundMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
 @layer base {
   :root {
@@ -180,15 +184,18 @@ button:focus:not(:focus-visible) {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
-}
 
-
-
-@layer base {
+  /* Apply default borders to everything */
   * {
     @apply border-border;
   }
+
+  /* Global body styles */
   body {
-    @apply bg-background text-foreground;
+    /* Use Tailwind text color but override background */
+    @apply text-foreground;
+    background: linear-gradient(135deg, #0033a0, #00b2ff, #ffffff);
+    background-size: 400% 400%;
+    animation: backgroundMove 30s ease infinite;
   }
 }

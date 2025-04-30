@@ -1,65 +1,91 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import './leaderboard.css';
+import chatStyles from '@/components/ChatBot.module.css'; // Glass-effect CSS module
 
-type Player = {
-  wallet_address: string;
-  wins: number;
-};
-
-type Transform = {
+// Transform type definition
+export type Transform = {
   pos: { x: number; y: number; z: number };
   rot: { x: number; y: number; z: number };
+  scale: { x: number; y: number; z: number };
 };
 
-// Initial transform for mountain background
-const INITIAL_MOUNTAIN_TRANSFORM: Transform = {
-  pos: { x: 0, y: -5, z: -30 },
-  rot: { x: 0, y: 0, z: 0 },
+// Models to load
+const MODEL_LIST = [
+  { key: 'trophy',      path: '/trophy.glb' },
+  { key: 'mountain',    path: '/low_poly_mountain_free.glb' },
+  { key: 'gold_medal',  path: '/gold_medal_no_shine.glb' },
+  { key: 'low_poly_planet_earth', path: '/low_poly_planet_earth.glb' },
+  { key: 'sonic2', path: '/sonic2.glb' },
+];
+
+// Initial transforms
+const INITIAL_TRANSFORMS: Record<string, Transform> = {
+  mountain: {
+    pos: { x: 6,  y: 6,  z: 77 },
+    rot: { x: 0,  y: 0.78, z: 0 },
+    scale: { x: 3, y: 3, z: 3 },
+  },
+  trophy: {
+    pos: { x: 8,  y: 9,  z: 74 },
+    rot: { x: 0,  y: -0.17, z: -0.15 },
+    scale: { x: 3, y: 3, z: 3 },
+  },
+  gold_medal: {
+    pos: { x: 9,  y: 10,  z: 74 },
+    rot: { x: 0,  y: -0.17, z: -0.15 },
+    scale: { x: 3, y: 3, z: 3 },
+  },
+  low_poly_planet_earth: {
+    pos: { x: 7,  y: 10,  z: 77 },
+    rot: { x: 0,  y: -0.17, z: -0.15 },
+    scale: { x: 0.5, y: 0.5, z: 0.5 },
+  },
+  sonic2: {
+    pos: { x: 7,  y: 10,  z: 75 },
+    rot: { x: 0,  y: 0.91, z: -0.15 },
+    scale: { x: 0.05, y: 0.05, z: 0.05 },
+  },
 };
 
-export default function LeaderboardWithDevMenu() {
-  // Leaderboard state
-  const [leaders, setLeaders] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Three.js refs & state
+export default function Page() {
   const mountRef = useRef<HTMLDivElement>(null);
-  const modelRef = useRef<THREE.Object3D | null>(null);
-  const [mountainTransform, setMountainTransform] = useState(INITIAL_MOUNTAIN_TRANSFORM);
-
-  // Dev menu toggle
+  const modelsRef = useRef<Record<string, THREE.Object3D>>({});
+  const mixersRef = useRef<Record<string, THREE.AnimationMixer>>({});
+  const [selectedModel, setSelectedModel] = useState<string>(MODEL_LIST[0].key);
+  const [transforms, setTransforms] = useState(INITIAL_TRANSFORMS);
   const [showDevMenu, setShowDevMenu] = useState(false);
 
-  // Fetch leaderboard data
+  // Leaderboard state
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [loadingLb, setLoadingLb] = useState(true);
+
+  // Fetch leaderboard data and normalize keys
   useEffect(() => {
-    async function fetchLeaders() {
-      try {
-        const res = await fetch('/api/leaderboard');
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        const data: Player[] = await res.json();
-        setLeaders(data);
-      } catch (err: any) {
-        console.error('Failed to load leaderboard', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchLeaders();
+    fetch('/api/leaderboard')
+      .then(res => res.json())
+      .then(data => {
+        const normalized = data.map((e: any) => ({
+          wallet_address: e.wallet_address,
+          wins: e.wins,
+          data: e.data
+        }));
+        setLeaderboard(normalized);
+      })
+      .catch(err => console.error('Leaderboard fetch error:', err))
+      .finally(() => setLoadingLb(false));
   }, []);
 
-  // Initialize Three.js scene with mountain background
+  // Three.js scene setup
   useEffect(() => {
     if (!mountRef.current) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 50);
+    camera.position.set(10, 10, 80);
+    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -68,45 +94,54 @@ export default function LeaderboardWithDevMenu() {
     mountRef.current.innerHTML = '';
     mountRef.current.appendChild(renderer.domElement);
 
-    // Lights
     scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
+    const clock = new THREE.Clock();
     const loader = new GLTFLoader();
-    // Load mountain model
-    loader.load(
-      '/low_poly_mountain_free.glb',
-      (gltf) => {
-        const mountain = gltf.scene;
-        mountain.scale.set(5, 5, 5);
-        // apply initial transform
-        mountain.position.set(
-          mountainTransform.pos.x,
-          mountainTransform.pos.y,
-          mountainTransform.pos.z
-        );
-        mountain.rotation.set(
-          mountainTransform.rot.x,
-          mountainTransform.rot.y,
-          mountainTransform.rot.z
-        );
-        scene.add(mountain);
-        modelRef.current = mountain;
-      },
-      undefined,
-      (err) => console.error('Error loading mountain model:', err)
-    );
 
-    // Animation loop
+    MODEL_LIST.forEach(({ key, path }) => {
+      loader.load(
+        path,
+        (gltf) => {
+          const model = gltf.scene;
+          const { scale, pos, rot } = transforms[key];
+          model.scale.set(scale.x, scale.y, scale.z);
+          model.position.set(pos.x, pos.y, pos.z);
+          model.rotation.set(rot.x, rot.y, rot.z);
+
+          scene.add(model);
+          modelsRef.current[key] = model;
+
+          if (gltf.animations.length > 0) {
+            const mixer = new THREE.AnimationMixer(model);
+            mixersRef.current[key] = mixer;
+            gltf.animations.forEach((clip) => {
+              const action = mixer.clipAction(clip);
+              action.setLoop(THREE.LoopRepeat, Infinity);
+              action.play();
+            });
+          }
+        },
+        undefined,
+        (error) => console.error(`Error loading ${path}:`, error)
+      );
+    });
+
+    const PLANET_ROTATION_SPEED = 0.5;
+    let reqId: number;
     const animate = () => {
-      requestAnimationFrame(animate);
+      reqId = requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      Object.values(mixersRef.current).forEach(m => m.update(delta));
+      const planet = modelsRef.current['low_poly_planet_earth'];
+      if (planet) planet.rotation.y += PLANET_ROTATION_SPEED * delta;
       renderer.render(scene, camera);
     };
     animate();
 
-    // Handle resize
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -116,35 +151,23 @@ export default function LeaderboardWithDevMenu() {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      cancelAnimationFrame(reqId);
+      renderer.dispose();
       if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
         mountRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [mountainTransform]);
+  }, [transforms]);
 
-  // Update mountain transform both in state and in scene
-  const updateMountainTransform = (newTransform: Partial<Transform>) => {
-    setMountainTransform((prev) => {
-      const updated = {
-        pos: newTransform.pos ? newTransform.pos : prev.pos,
-        rot: newTransform.rot ? newTransform.rot : prev.rot,
-      };
-      const model = modelRef.current;
-      if (model) {
-        model.position.set(updated.pos.x, updated.pos.y, updated.pos.z);
-        model.rotation.set(updated.rot.x, updated.rot.y, updated.rot.z);
-      }
-      return updated;
-    });
-  };
-
-  // Keyboard controls for dev menu and mountain transform
+  // Keyboard controls
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      let { x: px, y: py, z: pz } = mountainTransform.pos;
-      let { x: rx, y: ry, z: rz } = mountainTransform.rot;
+      const model = modelsRef.current[selectedModel];
+      if (!model) return;
       const moveAmt = 1;
       const rotAmt = Math.PI / 36;
+      let { x: px, y: py, z: pz } = transforms[selectedModel].pos;
+      let { x: rx, y: ry, z: rz } = transforms[selectedModel].rot;
       switch (e.code) {
         case 'KeyW': pz -= moveAmt; break;
         case 'KeyS': pz += moveAmt; break;
@@ -154,31 +177,91 @@ export default function LeaderboardWithDevMenu() {
         case 'ArrowDown': rx += rotAmt; break;
         case 'ArrowLeft': ry -= rotAmt; break;
         case 'ArrowRight': ry += rotAmt; break;
-        case 'KeyI':
-          setShowDevMenu(prev => !prev);
-          return;
-        default:
-          return;
+        case 'KeyI': setShowDevMenu(prev => !prev); return;
+        default: return;
       }
-      updateMountainTransform({ pos: { x: px, y: py, z: pz }, rot: { x: rx, y: ry, z: rz } });
+      updateTransform(selectedModel, { pos: { x: px, y: py, z: pz }, rot: { x: rx, y: ry, z: rz } });
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [mountainTransform]);
+  }, [selectedModel, transforms]);
 
-  // Render states for leaderboard
-  if (loading) return <p className="loading">Loading…</p>;
-  if (error) return <p className="error">Error: {error}</p>;
+  const updateTransform = useCallback(
+    (key: string, newVal: Partial<Transform>) => {
+      setTransforms(prev => {
+        const updated = {
+          ...prev,
+          [key]: {
+            pos: newVal.pos ?? prev[key].pos,
+            rot: newVal.rot ?? prev[key].rot,
+            scale: newVal.scale ?? prev[key].scale,
+          }
+        };
+        const model = modelsRef.current[key];
+        if (model) {
+          const { pos, rot, scale } = updated[key];
+          model.position.set(pos.x, pos.y, pos.z);
+          model.rotation.set(rot.x, rot.y, rot.z);
+          model.scale.set(scale.x, scale.y, scale.z);
+        }
+        return updated;
+      });
+    }, []
+  );
+
+  // Top 10 entries only
+  const topLeaderboard = leaderboard.slice(0, 10);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
-      {/* Three.js mount point */}
+    <div style={{ position: 'relative', width: '100%', minHeight: '120vh', height: 'auto' }}>
+
+  {/* Leaderboard Table */}
+  <aside className={chatStyles.container} style={{
+  position: 'absolute',
+  top: '120px',
+  left: 0,
+  width: '25%',
+  bottom: 0,
+  overflowY: 'auto',
+  zIndex: 4
+}}>
+  <img
+    src="/LEADERBOARD.png"
+    alt="Leaderboard"
+    style={{ width: '100%', marginBottom: '1rem' }}
+  />
+  {loadingLb ? (
+    <p>Loading…</p>
+  ) : (
+    <ol style={{
+      paddingLeft: '1.2rem',
+      margin: 0,
+      color: 'white',
+      listStylePosition: 'inside',
+      fontSize: '0.9rem',
+      lineHeight: '1.4'
+    }}>
+      {topLeaderboard.map((entry, i) => (
+        <li key={entry.wallet_address ?? i} style={{ marginBottom: '0.6rem' }}>
+          <span style={{ display: 'block', wordBreak: 'break-all' }}>
+            {entry.wallet_address}
+          </span>
+          <small style={{ opacity: 0.8 }}>Wins: {entry.wins}</small>
+        </li>
+      ))}
+    </ol>
+  )}
+</aside>
+
+
+
+      {/* Three.js Canvas */}
       <div
         ref={mountRef}
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
+        style={{ position: 'absolute', top: 0, left: '25%', width: '75%', height: '100%', zIndex: 0 }}
       />
 
-      {/* Dev Menu Toggle Button */}
+      {/* Toggle Dev Menu */}
       <button
         onClick={() => setShowDevMenu(prev => !prev)}
         style={{
@@ -187,57 +270,66 @@ export default function LeaderboardWithDevMenu() {
         }}
       >{showDevMenu ? 'Hide Dev Menu' : 'Show Dev Menu'}</button>
 
-      {/* Dev Menu Overlay */}
+      {/* Developer Menu */}
       {showDevMenu && (
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          padding: '1rem', background: 'rgba(0,0,0,0.7)', color: '#0f0', fontFamily: 'monospace',
-          zIndex: 2, borderRadius: '6px', minWidth: '240px'
+          padding: '1rem', background: 'rgba(0,0,0,0.7)', color: '#0f0', fontFamily: 'monospace', zIndex: 2,
+          borderRadius: '6px', minWidth: '240px'
         }}>
-          <div style={{ marginBottom: '0.5rem' }}><strong>Mountain Transform</strong></div>
+          <label htmlFor="model-select" style={{ display: 'block', marginBottom: '0.5rem' }}>Select Model:</label>
+          <select
+            id="model-select"
+            value={selectedModel}
+            onChange={e => setSelectedModel(e.target.value)}
+            style={{ width: '100%', marginBottom: '1rem' }}
+          >
+            {MODEL_LIST.map(m => <option key={m.key} value={m.key}>{m.key}</option>)}
+          </select>
+
+          <div style={{ marginBottom: '0.5rem' }}><strong>Position</strong></div>
           {(['x','y','z'] as const).map(axis => (
             <div key={axis} style={{ marginBottom: '0.25rem' }}>
-              <label>{axis.toUpperCase()} Pos: </label>
+              <label>{axis.toUpperCase()}: </label>
               <input
                 type="number"
-                value={mountainTransform.pos[axis].toFixed(1)}
-                onChange={e => updateMountainTransform({ pos: { ...mountainTransform.pos, [axis]: parseFloat(e.target.value) } })}
+                value={transforms[selectedModel].pos[axis].toFixed(1)}
+                onChange={e => updateTransform(selectedModel, { pos: { ...transforms[selectedModel].pos, [axis]: parseFloat(e.target.value) } })}
                 style={{ width: '60px', marginLeft: '0.5rem' }}
               />
             </div>
           ))}
+
+          <div style={{ margin: '0.5rem 0 0.25rem' }}><strong>Rotation</strong></div>
           {(['x','y','z'] as const).map(axis => (
             <div key={axis} style={{ marginBottom: '0.25rem' }}>
-              <label>{axis.toUpperCase()} Rot: </label>
+              <label>{axis.toUpperCase()}: </label>
               <input
                 type="number" step="0.01"
-                value={mountainTransform.rot[axis].toFixed(2)}
-                onChange={e => updateMountainTransform({ rot: { ...mountainTransform.rot, [axis]: parseFloat(e.target.value) } })}
-                style={{ width: '60px', marginLeft: '0.5rem' }}
-              />
+                value={transforms[selectedModel].rot[axis].toFixed(2)}
+                onChange={e => updateTransform(selectedModel, { rot: { ...transforms[selectedModel].rot, [axis]: parseFloat(e.target.value) } })}
+                style={{ width: '60px', marginLeft: '0.5rem' }} />
             </div>
           ))}
+
+
+          <div style={{ margin: '0.5rem 0 0.25rem' }}><strong>Scale</strong></div>
+          {(['x','y','z'] as const).map(axis => (
+            <div key={axis} style={{ marginBottom: '0.25rem' }}>
+              <label>{axis.toUpperCase()}: </label>
+              <input
+                type="number" step="0.1"
+                value={transforms[selectedModel].scale[axis].toFixed(1)}
+                onChange={e => updateTransform(selectedModel, { scale: { ...transforms[selectedModel].scale, [axis]: parseFloat(e.target.value) } })}
+                style={{ width: '60px', marginLeft: '0.5rem' }} />
+            </div>
+          ))}
+
           <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-            Use W/A/S/D & arrows to move/rotate, I or button to toggle menu.
+            Use fields above, W/A/S/D and Arrows, or I to toggle this menu.
           </div>
         </div>
       )}
-
-      {/* Leaderboard Panel */}
-      <main className="leaderboard-page" style={{ position: 'relative', zIndex: 1 }}>
-        <h2>Leaderboard</h2>
-        <ol className="leader-list">
-          {leaders.map((p, i) => (
-            <li key={p.wallet_address}>
-              <div className="card">
-                <span className="rank">{i + 1}.</span>
-                <span className="address">{p.wallet_address}</span>
-                <span className="wins">{p.wins} wins</span>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </main>
     </div>
   );
 }

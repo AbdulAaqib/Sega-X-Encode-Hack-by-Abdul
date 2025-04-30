@@ -82,6 +82,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ player }) => {
       {/* Status bar */}
       <div className={styles.statusBar}>
         <span>Player: {health.player} HP</span>
+        <span>Sega ChatGPT</span>
         <span>Opponent: {health.opponent} HP</span>
       </div>
 

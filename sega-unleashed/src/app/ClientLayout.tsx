@@ -14,7 +14,7 @@ declare global {
 }
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
-  const { account, balance } = useWallet();
+  const { account } = useWallet();
   const [localWalletAddress, setLocalWalletAddress] = useState('');
 
   useEffect(() => {

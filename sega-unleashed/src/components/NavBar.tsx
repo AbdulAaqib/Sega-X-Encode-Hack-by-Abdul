@@ -13,20 +13,21 @@ export default function NavBar() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [muted, setMuted] = useState(true);
 
+  // Initialize audio, unmute on first user interaction
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.muted = true;
     audio.defaultMuted = true;
     audio.play().catch(() => {});
-    const onFirstClick = () => {
+    const enableAudio = () => {
       audio.muted = false;
       setMuted(false);
       audio.play().catch(() => {});
-      document.removeEventListener('click', onFirstClick);
+      document.removeEventListener('click', enableAudio);
     };
-    document.addEventListener('click', onFirstClick, { once: true });
-    return () => document.removeEventListener('click', onFirstClick);
+    document.addEventListener('click', enableAudio, { once: true });
+    return () => document.removeEventListener('click', enableAudio);
   }, []);
 
   const toggleMute = () => {
@@ -39,10 +40,10 @@ export default function NavBar() {
   };
 
   const links = [
-    { href: '/packs', label: 'Buy Packs' },
-    { href: '/battles', label: 'Battle' },
-    { href: '/leaderboard', label: 'Leaderboard' },
+    { href: '/packs',          label: 'Buy Packs' },
+    { href: '/battles',        label: 'Battle' },
     { href: '/nft_characters', label: 'NFT Characters' },
+    { href: '/leaderboard',    label: 'Leaderboard' }, // Added Leaderboard link
   ];
 
   return (
@@ -58,17 +59,18 @@ export default function NavBar() {
       />
 
       <div className="nav-left">
-        <Link href="/">
+        <Link href="/" className="nav-logo-link">
           <img src="/SEGA-UNLEASHED.png" alt="Logo" className="nav-logo" />
         </Link>
+
         <ul className="navigation-menu-list">
-          {links.map((l) => (
-            <li key={l.href}>
+          {links.map(({ href, label }) => (
+            <li key={href}>
               <Link
-                href={l.href}
-                className={`nav-link${pathname === l.href ? ' active' : ''}`}
+                href={href}
+                className={`nav-link${pathname === href ? ' active' : ''}`}
               >
-                {l.label}
+                {label}
               </Link>
             </li>
           ))}
@@ -87,6 +89,7 @@ export default function NavBar() {
             className="audio-icon"
           />
         </button>
+
         {account && <div className="account-info">{account}</div>}
       </div>
     </nav>
