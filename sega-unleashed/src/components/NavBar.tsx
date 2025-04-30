@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import { useWallet } from '@/context/WalletContext';
@@ -40,10 +41,10 @@ export default function NavBar() {
   };
 
   const links = [
-    { href: '/packs',          label: 'Buy Packs' },
-    { href: '/battles',        label: 'Battle' },
+    { href: '/packs', label: 'Buy Packs' },
+    { href: '/battles', label: 'Battle' },
     { href: '/nft_characters', label: 'NFT Characters' },
-    { href: '/leaderboard',    label: 'Leaderboard' }, // Added Leaderboard link
+    { href: '/leaderboard', label: 'Leaderboard' }, // Added Leaderboard link
   ];
 
   return (
@@ -60,7 +61,14 @@ export default function NavBar() {
 
       <div className="nav-left">
         <Link href="/" className="nav-logo-link">
-          <img src="/SEGA-UNLEASHED.png" alt="Logo" className="nav-logo" />
+          <Image
+            src="/SEGA-UNLEASHED.png"
+            alt="Logo"
+            className="nav-logo"
+            width={150}
+            height={50}
+            priority
+          />
         </Link>
 
         <ul className="navigation-menu-list">
@@ -83,10 +91,12 @@ export default function NavBar() {
           onClick={toggleMute}
           aria-label={muted ? 'Unmute music' : 'Mute music'}
         >
-          <img
+          <Image
             src={muted ? '/audio_mute.png' : '/audio_unmute.png'}
             alt={muted ? 'Muted' : 'Unmuted'}
             className="audio-icon"
+            width={24}
+            height={24}
           />
         </button>
 

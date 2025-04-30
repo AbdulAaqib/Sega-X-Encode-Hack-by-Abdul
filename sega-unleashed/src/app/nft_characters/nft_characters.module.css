@@ -1,27 +1,28 @@
 /* components/nft_characters.module.css */
-
 .mainContainer {
-  margin-top: 80px;              
-  height: calc(100vh - 80px);    
-  overflow-y: auto;
+  margin-top: 80px;
+  min-height: calc(100vh - 80px);
+  padding: 1rem;
   box-sizing: border-box;
-  
-  /* glassy overlay instead of solid white */
-  background: rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: none;
+
+  background: rgba(255,255,255,0.1);
   backdrop-filter: blur(20px);
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 1rem;
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
 .nftGrid {
   display: grid;
+  /* pack as many 180px-wide columns as will fit */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  width: 100%;
 }
 
 .nftCard {
-  /* heavier glass effect on each card */
+  /* (same as before) */
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   border-radius: 12px;

@@ -1,4 +1,5 @@
 // app/types.ts
+
 export interface Player {
   name: string;
   description: string;
@@ -13,14 +14,17 @@ export interface Player {
 export interface AssistantResponse {
   narrative: string;
   options: [string, string, string, string];
-  health: { player: number; opponent: number };
+  health: {
+    player: number;
+    opponent: number;
+  };
   game_over: boolean;
   winner: string | null;
   callback: {
     url: string;
     method: string;
     headers: Record<string, string>;
-    payload: any;
+    payload: Record<string, unknown>; // ✅ safer than `any`
   };
 }
 

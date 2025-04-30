@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/api/chat/route.ts
 
 import { NextResponse } from 'next/server';
-import { AzureOpenAI, type ChatCompletionRequestMessage } from 'openai';
+import { AzureOpenAI } from 'openai';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
 import type { Player, AssistantResponse } from '../../types';
-
 
 // 1) Ensure Supabase env vars are provided
 const supabaseUrl        = process.env.SUPABASE_URL;
@@ -18,17 +19,31 @@ if (!supabaseUrl || !supabaseServiceKey) {
 // 2) Initialize Supabase client with service-role key
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Helper constructors to keep `as const` centralized
+const sysMsg = (txt: string): ChatCompletionMessageParam => ({
+  role: 'system' as const,
+  content: txt
+});
+const userMsg = (txt: string): ChatCompletionMessageParam => ({
+  role: 'user' as const,
+  content: txt
+});
+const botMsg = (txt: string): ChatCompletionMessageParam => ({
+  role: 'assistant' as const,
+  content: txt
+});
+
 export async function POST(request: Request) {
   try {
     // ─────────────────────────────────────────────────────────────────
     // PARSE + NORMALIZE WALLET FIELD (snake_case or camelCase)
     // ─────────────────────────────────────────────────────────────────
     const { player: playerData, history } = await request.json() as {
+       
       player: Player & Record<string, any>;
       history?: { sender: 'player' | 'bot'; text: string | null }[];
     };
 
-    // Accept either property name and normalize to lower-case
     const originalWallet = playerData.wallet_address_real ?? '';
     const wallet         = originalWallet.toLowerCase();
     const masked         = originalWallet;
@@ -46,9 +61,9 @@ export async function POST(request: Request) {
       "winner": string|null,
       "callback": {"url": string,"method": string,"headers": object,"payload": object}
     }
-    
+
     You are Sonic Battle Arena, the over-the-top, hype-filled announcer for a turn-based Pokémon-style game starring Sega Sonic Universe characters.
-    
+
     Opponent Generation Instructions:
     Use these trait pools:
     const TRAITS = {
@@ -57,24 +72,24 @@ export async function POST(request: Request) {
       lightning: ["Red Lightning","Blue Lightning"],
       gear: ["Speed Shoes","Dash Gloves","Power Ring","Shield Booster"]
     };
-    
+
     Use these pack distributions to determine how many cards and rarities:
     const PACKS = {
       Bronze: { size: 3, distribution: { Common:2, Rare:1, Epic:0, Legendary:0 } },
       Silver: { size: 5, distribution: { Common:3, Rare:1, Epic:1, Legendary:0 } },
       Gold:   { size: 7, distribution: { Common:3, Rare:2, Epic:1, Legendary:1 } }
     };
-    
+
     Rarity multipliers:
     - Common: ×1.0 health & damage
     - Rare: ×1.1
     - Epic: ×1.25
     - Legendary: ×1.5
-    
+
     Lightning multiplier on damage:
     - Blue Lightning: +20% damage
     - Red Lightning: no bonus
-    
+
     Battle Rules:
     1. Always generate a new opponent JSON using the TRAITS and PACKS specifications.
     2. You also receive the player JSON with base health and move set.
@@ -86,12 +101,16 @@ export async function POST(request: Request) {
     6. On battle end, set "game_over": true and "winner" to the name of the victor.
     8. Stay hyped, fun, and in-character as a Sonic arena announcer!`;
 
-    const messages: ChatCompletionRequestMessage[] = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user',   content: JSON.stringify({ player: playerData, wallet_address: wallet }) },
+    const messages: ChatCompletionMessageParam[] = [
+      sysMsg(systemPrompt),
+      userMsg(JSON.stringify({ player: playerData, wallet_address: wallet })),
       ...(history ?? [])
         .filter(h => typeof h.text === 'string' && h.text.trim())
-        .map(h => ({ role: h.sender === 'player' ? 'user' : 'assistant', content: h.text! }))
+        .map(h =>
+          h.sender === 'player'
+            ? userMsg(h.text!.trim())
+            : botMsg(h.text!.trim())
+        )
     ];
 
     const aiClient = new AzureOpenAI({
@@ -116,7 +135,6 @@ export async function POST(request: Request) {
     parsed.health.player   = Math.max(0, parsed.health.player);
     parsed.health.opponent = Math.max(0, parsed.health.opponent);
 
-    // Determine game over and correct winner
     if (parsed.health.opponent <= 0) {
       parsed.game_over = true;
       parsed.winner = playerData.name;
@@ -144,7 +162,7 @@ export async function POST(request: Request) {
         console.error('❌ Supabase select error:', selectError);
       } else if (matchingUser) {
         const newWins = (matchingUser.wins ?? 0) + 1;
-        const { data: updated, error: updateError } = await supabase
+        const { error: updateError } = await supabase
           .from('user_data')
           .update({ wins: newWins })
           .ilike('wallet_address', wallet)
@@ -164,17 +182,15 @@ export async function POST(request: Request) {
     // SUCCESS: return the game state
     // ─────────────────────────────────────────────────────────────────
     return NextResponse.json(parsed);
-  }
-  catch (err: any) {
+  } catch (err: any) {
     console.error('❌ Handler error:', err);
-    const fallback: AssistantResponse = {
+    return NextResponse.json({
       narrative: '⚠️ An unexpected error occurred. Please try again.',
-      options: [],
+      options: ['', '', '', ''],         // ← exactly 4 strings now
       health: { player: 0, opponent: 0 },
       game_over: false,
       winner: null,
       callback: { url: '', method: '', headers: {}, payload: {} }
-    };
-    return NextResponse.json(fallback, { status: 200 });
+    }, { status: 200 });
   }
 }

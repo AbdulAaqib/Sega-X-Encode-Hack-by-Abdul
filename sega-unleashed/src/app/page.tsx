@@ -4,46 +4,38 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/context/WalletContext';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import './sega-sky.css'; // Sega-themed sky background
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import Image from 'next/image';
+import './sega-sky.css';
 
 export default function Home() {
   const { connectWallet, error } = useWallet();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // Three.js refs
   const mountRef = useRef<HTMLDivElement>(null);
   const islandRef = useRef<THREE.Object3D | null>(null);
-  const townRef   = useRef<THREE.Object3D | null>(null);
-  const sonicRef  = useRef<THREE.Object3D | null>(null);
+  const townRef = useRef<THREE.Object3D | null>(null);
+  const sonicRef = useRef<THREE.Object3D | null>(null);
 
-  // Dev menu and transform state for island
   const [devOpen, setDevOpen] = useState(false);
   const [pos, setPos] = useState({ x: -1, y: -4, z: -10 });
   const [rot, setRot] = useState({ x: 0.06, y: -0.04, z: 0 });
 
-  // Animation parameters
-  const phaseDuration = 5;                    // seconds per object
-  const islandStartY = 0.33;
-  const islandEndY   = -0.9;
-  const townStartY   = 0.93;
-  const townEndY     = -0.4;
+  const phaseDuration = 5;
 
-  // Connect wallet
   const handleConnect = async () => {
     setLoading(true);
     try {
       const acct = await connectWallet();
       if (acct) router.replace('/packs');
     } catch {
-      // error handled by context
+      // Error handled by context
     } finally {
       setLoading(false);
     }
   };
 
-  // Initialize Three.js scene + animation
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -72,18 +64,23 @@ export default function Home() {
     const clock = new THREE.Clock();
     const loader = new GLTFLoader();
 
-    // Load island
+    const staticPos = { x: -1, y: -4, z: -10 };
+    const staticRot = { x: 0.06, y: -0.04, z: 0 };
+    const islandStartY = 0.33;
+    const islandEndY = -0.9;
+    const townStartY = 0.93;
+    const townEndY = -0.4;
+
     loader.load('/green_island.glb', gltf => {
       const m = gltf.scene;
       m.scale.set(1, 1, 1);
-      m.position.set(pos.x, pos.y, pos.z);
-      m.rotation.set(rot.x, islandStartY, rot.z);
+      m.position.set(staticPos.x, staticPos.y, staticPos.z);
+      m.rotation.set(staticRot.x, islandStartY, staticRot.z);
       m.visible = true;
       camera.add(m);
       islandRef.current = m;
     });
 
-    // Load town
     loader.load('/fishing_town.glb', gltf => {
       const m = gltf.scene;
       m.scale.set(1, 1, 1);
@@ -94,29 +91,26 @@ export default function Home() {
       townRef.current = m;
     });
 
-    // Load Sonic
     loader.load('/sonic2.glb', gltf => {
       const m = gltf.scene;
-      m.scale.set(0.5, 0.5, 0.5);           // adjust size if needed
-      m.position.set(0, -2, -5);      // place in front of camera
-      m.rotation.set(0, Math.PI, 0);  // face the camera
+      m.scale.set(0.5, 0.5, 0.5);
+      m.position.set(0, -2, -5);
+      m.rotation.set(0, Math.PI, 0);
       m.visible = true;
       scene.add(m);
       sonicRef.current = m;
     });
 
-    // Animation + render
     const animate = () => {
       requestAnimationFrame(animate);
       const elapsed = clock.getElapsedTime();
       const cycle = Math.floor(elapsed / phaseDuration) % 2;
       const t = (elapsed % phaseDuration) / phaseDuration;
 
-      // Phase 0: island, Phase 1: town
       if (islandRef.current && townRef.current) {
         const showingIsland = cycle === 0;
         islandRef.current.visible = showingIsland;
-        townRef.current.visible   = !showingIsland;
+        townRef.current.visible = !showingIsland;
 
         if (showingIsland) {
           islandRef.current.rotation.y = THREE.MathUtils.lerp(
@@ -133,7 +127,6 @@ export default function Home() {
         }
       }
 
-      // Sonic idle rotation
       if (sonicRef.current) {
         sonicRef.current.rotation.y += 0.01;
       }
@@ -142,7 +135,6 @@ export default function Home() {
     };
     animate();
 
-    // Handle resize
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -152,7 +144,6 @@ export default function Home() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Dev-menu toggle
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'KeyI') setDevOpen(o => !o);
@@ -161,7 +152,6 @@ export default function Home() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Update transform from Dev
   const updateTransform = (
     newPos: typeof pos,
     newRot: typeof rot
@@ -176,7 +166,6 @@ export default function Home() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
-      {/* Sega Sky Background */}
       <div className="stars" />
       <div className="clouds" />
 
@@ -185,7 +174,6 @@ export default function Home() {
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
       />
 
-      {/* UI Overlay */}
       <div
         className="page"
         style={{
@@ -198,11 +186,14 @@ export default function Home() {
           pointerEvents: 'none',
         }}
       >
-        <img
+        <Image
           src="/SEGA-UNLEASHED-gif.gif"
           alt="Welcome to SEGA Unleashed"
           className="welcome-gif"
+          width={500}
+          height={300}
           style={{ pointerEvents: 'all' }}
+          priority
         />
         {error && <p className="App-error">{error}</p>}
         <button
@@ -219,7 +210,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Dev Menu Toggle */}
       <button
         onClick={() => setDevOpen(o => !o)}
         style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, pointerEvents: 'all' }}
@@ -227,7 +217,6 @@ export default function Home() {
         {devOpen ? 'Hide Dev' : 'Show Dev'}
       </button>
 
-      {/* Dev Menu */}
       {devOpen && (
         <div
           style={{
@@ -278,7 +267,9 @@ export default function Home() {
               />
             </div>
           ))}
-          <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Press 'I' to toggle</div>
+          <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+            Press &#39;I&#39; to toggle
+          </div>
         </div>
       )}
     </div>

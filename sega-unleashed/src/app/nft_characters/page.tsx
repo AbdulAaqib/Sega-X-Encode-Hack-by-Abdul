@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useWallet } from '@/context/WalletContext';
 import styles from './nft_characters.module.css';
 
@@ -51,11 +52,16 @@ export default function NFTCharactersPage() {
       <div className={styles.nftGrid}>
         {nfts.map(({ nft_id, nft_data }) => (
           <div key={nft_id} className={styles.nftCard}>
-            <img
-              src={nft_data.image}
-              alt={nft_data.name}
-              className={styles.nftImage}
-            />
+            <div className={styles.imageWrapper}>
+              <Image
+                src={nft_data.image}
+                alt={nft_data.name}
+                width={300}
+                height={300}
+                className={styles.nftImage}
+                unoptimized={nft_data.image.startsWith('ipfs://') || nft_data.image.startsWith('http') === false}
+              />
+            </div>
             <h2 className={styles.nftName}>{nft_data.name}</h2>
             <p className={styles.nftDescription}>{nft_data.description}</p>
             <ul className={styles.attributesList}>

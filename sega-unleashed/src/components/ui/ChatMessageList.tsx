@@ -1,10 +1,8 @@
-// components/ui/ChatMessageList.tsx
-
 import * as React from 'react';
 import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-// Correct import: two levels up to reach src/hooks
 import { useAutoScroll } from '../../hooks/use-auto-scroll';
+import { mergeRefs } from '@/lib/mergeRefs';
 
 interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
   smooth?: boolean;
@@ -17,7 +15,6 @@ const ChatMessageList = React.forwardRef<
   const {
     scrollRef,
     isAtBottom,
-    autoScrollEnabled,
     scrollToBottom,
     disableAutoScroll,
   } = useAutoScroll({ smooth, content: children });
@@ -26,7 +23,7 @@ const ChatMessageList = React.forwardRef<
     <div className="relative w-full h-full">
       <div
         className={`flex flex-col w-full h-full p-4 overflow-y-auto ${className}`}
-        ref={scrollRef}
+        ref={mergeRefs([ref, scrollRef])}
         onWheel={disableAutoScroll}
         onTouchMove={disableAutoScroll}
         {...props}
@@ -36,7 +33,7 @@ const ChatMessageList = React.forwardRef<
 
       {!isAtBottom && (
         <Button
-          onClick={() => scrollToBottom()}
+          onClick={scrollToBottom}
           size="icon"
           variant="outline"
           className="absolute bottom-2 left-1/2 transform -translate-x-1/2 inline-flex rounded-full shadow-md"

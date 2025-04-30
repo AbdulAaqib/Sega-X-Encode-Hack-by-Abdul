@@ -1,14 +1,15 @@
-// PackOpenings.tsx
 'use client';
 
 import { useState, useRef, useEffect } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { DragControls } from "three/examples/jsm/controls/DragControls";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DragControls } from "three/examples/jsm/controls/DragControls.js";
 import { BrowserProvider, getAddress, parseEther, TransactionResponse } from "ethers";
+import Image from "next/image";
 import ErrorMessage from "./ErrorMessage";
 import TxList from "./TxList";
 import styles from "./PackOpenings.module.css";
+import type { MetaMaskInpageProvider } from "@metamask/providers";
 
 interface PaymentHandlers {
   setError: (msg: string) => void;
@@ -16,26 +17,27 @@ interface PaymentHandlers {
   amount: string;
 }
 
-// Added a free tier that functions like the Bronze tier
 const PACK_TIERS = [
   { amount: "0",    img: "/Free.png" },
   { amount: "0.01", img: "/BRONZE.png" },
   { amount: "0.05", img: "/SILVER.png" },
-  { amount: "0.1",  img: "/GOLD.png"   },
+  { amount: "0.1",  img: "/GOLD.png" },
 ];
 
 async function startPayment({ setError, setTxs, amount }: PaymentHandlers) {
+  // Now TS knows window.ethereum is a MetaMaskInpageProvider
   if (amount !== "0" && !window.ethereum) {
     const err = "No crypto wallet found. Please install MetaMask.";
     setError(err);
     throw new Error(err);
   }
+
   try {
     let tx: TransactionResponse | null = null;
 
-    if (amount !== "0") {
+    if (amount !== "0" && window.ethereum) {
       await window.ethereum.request({ method: "eth_requestAccounts" });
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = new BrowserProvider(window.ethereum as unknown as MetaMaskInpageProvider);
       const signer = await provider.getSigner();
       const recipient = "0xA05228D9D57Fa3D2fc3D33885Ee5E281A94100C9";
       getAddress(recipient);
@@ -45,8 +47,9 @@ async function startPayment({ setError, setTxs, amount }: PaymentHandlers) {
 
     setError("");
     return tx;
-  } catch (err: any) {
-    setError(err.message || "An unknown error occurred.");
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "An unknown error occurred.";
+    setError(msg);
     throw err;
   }
 }
@@ -60,9 +63,16 @@ export default function PackOpenings() {
   const [buyHover, setBuyHover] = useState(false);
 
   useEffect(() => {
-    // THREE.js scene setup
+    const mountNode = mountRef.current;
+    if (!mountNode) return;
+
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
     const initialPos = { x: -20.86, y: 25.02, z: 27 };
     const radius = Math.hypot(initialPos.x, initialPos.y, initialPos.z);
     let theta = Math.atan2(initialPos.z, initialPos.x);
@@ -81,10 +91,8 @@ export default function PackOpenings() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    if (mountRef.current) {
-      mountRef.current.innerHTML = '';
-      mountRef.current.appendChild(renderer.domElement);
-    }
+    mountNode.innerHTML = '';
+    mountNode.appendChild(renderer.domElement);
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -93,23 +101,37 @@ export default function PackOpenings() {
 
     const loader = new GLTFLoader();
     const draggable: THREE.Object3D[] = [];
+
     loader.load(
       "/low_poly_mine_cave.glb",
       (gltf) => {
         const modelRoot = gltf.scene;
         modelRoot.scale.set(2, 2, 2);
         scene.add(modelRoot);
+
         modelRoot.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) draggable.push(child);
+          if ((child as THREE.Mesh).isMesh) {
+            draggable.push(child);
+          }
         });
+
         const controls = new DragControls(draggable, camera, renderer.domElement);
+
         controls.addEventListener("dragstart", (e) => {
-          const mat = (e.object as THREE.Mesh).material as any;
+          const mesh = e.object as THREE.Mesh;
+          const mat = mesh.material as THREE.Material & {
+            transparent: boolean;
+            opacity: number;
+          };
           mat.transparent = true;
           mat.opacity = 0.7;
         });
         controls.addEventListener("dragend", (e) => {
-          const mat = (e.object as THREE.Mesh).material as any;
+          const mesh = e.object as THREE.Mesh;
+          const mat = mesh.material as THREE.Material & {
+            transparent: boolean;
+            opacity: number;
+          };
           mat.opacity = 1;
           mat.transparent = false;
         });
@@ -152,7 +174,7 @@ export default function PackOpenings() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', onResize);
-      if (mountRef.current) mountRef.current.innerHTML = '';
+      mountNode.innerHTML = '';
     };
   }, []);
 
@@ -161,11 +183,12 @@ export default function PackOpenings() {
     setError("");
     setTxs([]);
     setMintedIds([]);
+
     try {
       const tx = await startPayment({ setError, setTxs, amount: selectedTier });
-      // Free tier behaves like Bronze
+
       const tierLabel =
-        selectedTier === '0'    ? 'Bronze' :
+        selectedTier === '0'    ? 'Free' :
         selectedTier === '0.01' ? 'Bronze' :
         selectedTier === '0.05' ? 'Silver' : 'Gold';
 
@@ -174,11 +197,12 @@ export default function PackOpenings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipient: tx?.from, traits: { packType: tierLabel } }),
       });
+
       if (!res.ok) throw new Error((await res.json()).error || 'Mint failed');
       const ids: number[] = await res.json();
       setMintedIds(ids);
     } catch {
-      // error already set
+      // error displayed via setError
     }
   };
 
@@ -210,16 +234,17 @@ export default function PackOpenings() {
                 className={styles.btnGlass}
                 style={{ width: "140px", height: "140px", padding: 0 }}
               >
-                <img
+                <Image
                   src={tier.img}
                   alt={`${tier.amount} ETH pack`}
                   className={styles.imgReset}
+                  width={140}
+                  height={140}
                   style={{
-                    width: "100%",
-                    height: "100%",
                     objectFit: "contain",
                     opacity: selectedTier === tier.amount ? 1 : 0.5,
                   }}
+                  priority
                 />
               </button>
             ))}
@@ -234,11 +259,13 @@ export default function PackOpenings() {
             onMouseLeave={() => setBuyHover(false)}
             style={{ marginBottom: "1rem" }}
           >
-            <img
+            <Image
               src={buyHover ? "/Buy-Pack.png" : "/Buy-a-Pack.png"}
               alt="Buy a Pack"
+              width={240}
+              height={80}
               className={styles.imgReset}
-              style={{ width: "240px", height: "auto" }}
+              priority
             />
           </button>
 
@@ -255,8 +282,6 @@ export default function PackOpenings() {
                   rel="noopener noreferrer"
                   className="text-glass"
                   style={{
-                    position: "relative",
-                    zIndex: 2,
                     textDecoration: "underline",
                     wordBreak: "break-all",
                     pointerEvents: "auto",
