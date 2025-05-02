@@ -31,12 +31,15 @@ function peekCurrentTokenId() {
   if (!fs.existsSync(TOKEN_TRACKER_PATH)) return 0;
   try {
     const data = JSON.parse(fs.readFileSync(TOKEN_TRACKER_PATH, "utf8"));
+    console.log("peekCurrentTokenId > file data:", data);
     return data.current || 0;
-  } catch {
+  } catch (err) {
+    console.error("peekCurrentTokenId error parsing JSON:", err);
     return 0;
   }
 }
 function updateTokenId(current) {
+  console.log("updateTokenId > writing current:", current);
   fs.writeFileSync(TOKEN_TRACKER_PATH, JSON.stringify({ current }, null, 2));
 }
 
@@ -57,13 +60,14 @@ const PACKS = {
 
 /**
  * Build the image path by matching the actual filename in final_images
- * to ensure exact filenames are used (including .jpeg_ in names)
  */
 function buildImagePath(character, background, lightning) {
+  console.log("buildImagePath > inputs:", { character, background, lightning });
   const charKey = character.toLowerCase();
   const bgKey = background.toLowerCase().includes("green") ? "green_hill" : "blue_hill";
   const ltKey = lightning.toLowerCase().includes("blue") ? "bluelightning" : "redlightning";
   const files = fs.readdirSync(IMAGES_DIR);
+  console.log("buildImagePath > directory files:", files);
   const match = files.find((fname) => {
     const lower = fname.toLowerCase();
     return lower.includes(`${charKey}_`) && lower.includes(`${bgKey}_`) && lower.includes(`${ltKey}`);
@@ -71,57 +75,70 @@ function buildImagePath(character, background, lightning) {
   if (!match) {
     throw new Error(`No image file matching ${character}, ${background}, ${lightning}`);
   }
-  return path.join(IMAGES_DIR, match);
+  const p = path.join(IMAGES_DIR, match);
+  console.log("buildImagePath > resolved path:", p);
+  return p;
 }
 
 // Mint on-chain helper
 async function mintOnContract(recipient, tokenId, metadataUri) {
-  console.log(`Minting on-chain: token ${tokenId} to ${recipient}`);
+  console.log("mintOnContract > params:", { recipient, tokenId, metadataUri });
   const provider = new hre.ethers.JsonRpcProvider(process.env.POLYGON_MUMBAI_RPC_URL);
   const signer = new hre.ethers.Wallet(process.env.PRIVATE_KEY, provider);
   const Factory = await hre.ethers.getContractFactory("SegaUNLEASHED", signer);
   const contract = Factory.attach(process.env.CONTRACT_ADDRESS);
   if (!hre.ethers.isAddress(recipient)) throw new Error("Invalid recipient address.");
   const tx = await contract.safeMint(recipient, tokenId, metadataUri);
+  console.log("mintOnContract > sent tx:", tx.hash);
   await tx.wait();
-  console.log(`Transaction complete: ${tx.hash}`);
+  console.log("mintOnContract > tx confirmed:", tx.hash);
   return tx.hash;
 }
 
 app.post("/mint", async (req, res) => {
   try {
+    console.log("POST /mint > incoming body:", req.body);
     const { recipient, traits } = req.body;
     if (!recipient || !traits?.packType) {
+      console.warn("POST /mint > missing recipient or packType");
       return res.status(400).json({ error: "Missing recipient or packType" });
     }
 
-    // Normalize recipient address to lowercase for database
     const recipientAddress = recipient.toLowerCase();
+    console.log("Normalized recipientAddress:", recipientAddress);
 
     const packType = traits.packType;
+    console.log("Requested packType:", packType);
     const pack = PACKS[packType];
+    console.log("Pack definition:", pack);
     if (!pack) return res.status(400).json({ error: `Unknown packType: ${packType}` });
-
-    console.log(`Minting ${packType} pack for ${recipientAddress}`);
 
     // Pinata credentials
     const pinataKey = process.env.PINATA_API_KEY;
     const pinataSecret = process.env.PINATA_SECRET_API_KEY;
+    console.log("Pinata creds present:", !!pinataKey, !!pinataSecret);
     if (!pinataKey || !pinataSecret) throw new Error("Missing Pinata credentials");
 
     let currentId = peekCurrentTokenId();
+    console.log("Starting currentId:", currentId);
     const mintedIds = [];
 
     for (const [rarity, count] of Object.entries(pack.distribution)) {
+      console.log(`Processing rarity ${rarity} with count ${count}`);
       for (let i = 0; i < count; i++) {
         currentId++;
+        console.log("New tokenId:", currentId);
+
+        // Randomly pick traits
         const character = TRAITS.characters[Math.floor(Math.random() * TRAITS.characters.length)];
         const background = TRAITS.backgrounds[Math.floor(Math.random() * TRAITS.backgrounds.length)];
         const lightning = TRAITS.lightning[Math.floor(Math.random() * TRAITS.lightning.length)];
         const gear = TRAITS.gear[Math.floor(Math.random() * TRAITS.gear.length)];
+        console.log("Selected traits:", { character, background, lightning, gear, rarity });
 
         // Build and pin the correct image
         const imagePath = buildImagePath(character, background, lightning);
+        console.log("Image path to upload:", imagePath);
         const imageForm = new FormData();
         imageForm.append("file", fs.createReadStream(imagePath), path.basename(imagePath));
         const pinImage = await axios.post(
@@ -130,11 +147,12 @@ app.post("/mint", async (req, res) => {
           { headers: { ...imageForm.getHeaders(), pinata_api_key: pinataKey, pinata_secret_api_key: pinataSecret } }
         );
         const imageUri = `https://gateway.pinata.cloud/ipfs/${pinImage.data.IpfsHash}`;
+        console.log("Pinned imageUri:", imageUri);
 
         // Metadata payload
         const metadata = {
           name: `SegaUNLEASHED #${currentId}`,
-          description: `A ${packType} pack Sonic trading card NFT (token ${currentId}).`, 
+          description: `A ${packType} pack Sonic trading card NFT (token ${currentId}).`,
           image: imageUri,
           attributes: [
             { trait_type: "Character", value: character },
@@ -144,6 +162,7 @@ app.post("/mint", async (req, res) => {
             { trait_type: "Rarity", value: rarity }
           ]
         };
+        console.log("Constructed metadata object:", metadata);
 
         // Pin metadata
         const metaForm = new FormData();
@@ -155,31 +174,39 @@ app.post("/mint", async (req, res) => {
           { headers: { ...metaForm.getHeaders(), pinata_api_key: pinataKey, pinata_secret_api_key: pinataSecret } }
         );
         const metadataUri = `https://gateway.pinata.cloud/ipfs/${pinMeta.data.IpfsHash}`;
+        console.log("Pinned metadataUri:", metadataUri);
 
         // On-chain mint
         const txHash = await mintOnContract(recipientAddress, currentId, metadataUri);
+        console.log("Mint transaction hash:", txHash);
         updateTokenId(currentId);
 
-        // Database inserts: use lowercase address
+        // Database inserts
+        console.log("Inserting NFT record into Supabase for tokenId:", currentId);
         await supabase.from('nfts').insert({ nft_id: currentId, nft_data: metadata }).single();
+
         const { data: existing } = await supabase
           .from('user_data')
           .select('data')
           .eq('wallet_address', recipientAddress)
           .single();
+        console.log("Fetched existing user_data:", existing);
         const userTokenIds = (existing?.data || []);
         userTokenIds.push(currentId);
+        console.log("Updated userTokenIds:", userTokenIds);
         await supabase.from('user_data').upsert({ wallet_address: recipientAddress, data: userTokenIds });
 
         mintedIds.push(currentId);
+        console.log("mintedIds so far:", mintedIds);
       }
     }
 
-    console.log(`Completed ${mintedIds.length} mints for ${recipientAddress}`);
-    res.json(mintedIds);
+    console.log(`Completed minting ${mintedIds.length} tokens for ${recipientAddress}:`, mintedIds);
+    return res.json(mintedIds);
+
   } catch (err) {
     console.error("Mint error:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 

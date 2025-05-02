@@ -15,10 +15,3 @@ node_modules
 
 # Hardhat Ignition default folder for deployments against a local node
 ignition/deployments/chain-31337
-.env*
-nft.env
-
-C:\Users\AImageGenerationGPU\Documents\GitHub\Sega-X-Encode-Hack-by-Abdul\blockchain code\.env
-
-
-C:\Users\AImageGenerationGPU\Documents\GitHub\Sega-X-Encode-Hack-by-Abdul\blockchain code\scripts\nft.env

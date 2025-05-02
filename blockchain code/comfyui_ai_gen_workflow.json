@@ -1,0 +1,63 @@
+{
+  "1": {
+    "inputs": {
+      "image": "b9f7e65fdbc2a1aea95564c45e714828.png",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "2": {
+    "inputs": {
+      "pixel_size": 8,
+      "image": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "Pixelization",
+    "_meta": {
+      "title": "Pixelization"
+    }
+  },
+  "3": {
+    "inputs": {
+      "images": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "4": {
+    "inputs": {
+      "pixel_size": 8,
+      "image": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "Pixelization",
+    "_meta": {
+      "title": "Pixelization"
+    }
+  },
+  "11": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}
