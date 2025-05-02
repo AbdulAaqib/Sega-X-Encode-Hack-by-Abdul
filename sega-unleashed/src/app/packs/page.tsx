@@ -192,7 +192,7 @@ export default function PackOpenings() {
         selectedTier === '0.01' ? 'Bronze' :
         selectedTier === '0.05' ? 'Silver' : 'Gold';
 
-      const res = await fetch('http://20.117.181.22:5111/mint', {
+      const res = await fetch('https://mpdfunction2.azurewebsites.net/api/mintpack2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipient: tx?.from, traits: { packType: tierLabel } }),

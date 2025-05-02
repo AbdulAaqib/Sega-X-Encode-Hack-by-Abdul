@@ -11,8 +11,17 @@ import './navigation-menu.css';
 export default function NavBar() {
   const { account } = useWallet();
   const pathname = usePathname();
+
+  // track when we've hydrated on the client
+  const [isClient, setIsClient] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement>(null);
   const [muted, setMuted] = useState(true);
+
+  // mark client after mount
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Initialize audio, unmute on first user interaction
   useEffect(() => {
@@ -44,7 +53,7 @@ export default function NavBar() {
     { href: '/packs', label: 'Buy Packs' },
     { href: '/battles', label: 'Battle' },
     { href: '/nft_characters', label: 'NFT Characters' },
-    { href: '/leaderboard', label: 'Leaderboard' }, // Added Leaderboard link
+    { href: '/leaderboard', label: 'Leaderboard' },
   ];
 
   return (
@@ -86,21 +95,60 @@ export default function NavBar() {
       </div>
 
       <div className="nav-right">
-        <button
-          className="audio-toggle-btn"
-          onClick={toggleMute}
-          aria-label={muted ? 'Unmute music' : 'Mute music'}
-        >
-          <Image
-            src={muted ? '/audio_mute.png' : '/audio_unmute.png'}
-            alt={muted ? 'Muted' : 'Unmuted'}
-            className="audio-icon"
-            width={24}
-            height={24}
-          />
-        </button>
+        {isClient && (
+          <>
+            {/* Audio toggle */}
+            <button
+              className="audio-toggle-btn"
+              onClick={toggleMute}
+              aria-label={muted ? 'Unmute music' : 'Mute music'}
+            >
+              <Image
+                src={muted ? '/audio_mute.png' : '/audio_unmute.png'}
+                alt={muted ? 'Muted' : 'Unmuted'}
+                className="audio-icon"
+                width={24}
+                height={24}
+              />
+            </button>
 
-        {account && <div className="account-info">{account}</div>}
+            {/* GitHub button */}
+            <Link
+              href="https://github.com/AbdulAaqib/Sega-X-Encode-Hack-by-Abdul"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-btn"
+              aria-label="GitHub"
+            >
+              <Image
+                src="/github_logo.png"
+                alt="GitHub"
+                className="social-icon"
+                width={24}
+                height={24}
+              />
+            </Link>
+
+            {/* LinkedIn button */}
+            <Link
+              href="https://www.linkedin.com/in/abdulaaqib"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-btn"
+              aria-label="LinkedIn"
+            >
+              <Image
+                src="/linkedin_logo.png"
+                alt="LinkedIn"
+                className="social-icon"
+                width={24}
+                height={24}
+              />
+            </Link>
+
+            {account && <div className="account-info">{account}</div>}
+          </>
+        )}
       </div>
     </nav>
   );

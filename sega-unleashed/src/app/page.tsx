@@ -9,7 +9,7 @@ import Image from 'next/image';
 import './sega-sky.css';
 
 export default function Home() {
-  const { connectWallet, error } = useWallet();
+  const { connectWallet, error, account } = useWallet();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -164,6 +164,12 @@ export default function Home() {
     setRot(newRot);
   };
 
+  const buttonText = loading
+    ? 'Connecting…'
+    : account
+    ? 'Signed into MetaMask'
+    : 'Connect MetaMask';
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
       <div className="stars" />
@@ -198,15 +204,13 @@ export default function Home() {
         {error && <p className="App-error">{error}</p>}
         <button
           onClick={handleConnect}
-          disabled={loading}
+          disabled={loading || Boolean(account)}
           className="connect-btn"
           style={{ pointerEvents: 'all' }}
         >
           <span className="shadow" />
           <span className="edge" />
-          <span className="front">
-            {loading ? 'Connecting…' : 'Connect MetaMask'}
-          </span>
+          <span className="front">{buttonText}</span>
         </button>
       </div>
 
@@ -268,7 +272,7 @@ export default function Home() {
             </div>
           ))}
           <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-            Press &#39;I&#39; to toggle
+            Press &apos;I&apos; to toggle
           </div>
         </div>
       )}

@@ -18,7 +18,8 @@ const CONTRACT_ADDRESS      = "0xa23869069bc8079B74a03eb62806D6e2E892D9Fe";
 
 // Resolve directories relative to this file
 const IMAGES_DIR   = path.resolve(__dirname, "../final_images");
-const TRACKER_PATH = path.resolve(__dirname, "../token_id_tracker.json");
+
+const TRACKER_PATH = path.join(__dirname, 'token_id_tracker.json');
 
 // Initialize Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);

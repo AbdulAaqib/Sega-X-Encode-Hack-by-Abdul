@@ -50,29 +50,52 @@ export default function NFTCharactersPage() {
   return (
     <main className={styles.mainContainer}>
       <div className={styles.nftGrid}>
-        {nfts.map(({ nft_id, nft_data }) => (
-          <div key={nft_id} className={styles.nftCard}>
-            <div className={styles.imageWrapper}>
-              <Image
-                src={nft_data.image}
-                alt={nft_data.name}
-                width={300}
-                height={300}
-                className={styles.nftImage}
-                unoptimized={nft_data.image.startsWith('ipfs://') || nft_data.image.startsWith('http') === false}
-              />
+        {nfts.map(({ nft_id, nft_data }) => {
+          const openseaUrl = `https://opensea.io/item/matic/0xa23869069bc8079b74a03eb62806d6e2e892d9fe/${nft_id}`;
+          return (
+            <div key={nft_id} className={styles.nftCard}>
+              <div className={styles.imageWrapper}>
+                <Image
+                  src={nft_data.image}
+                  alt={nft_data.name}
+                  width={300}
+                  height={300}
+                  className={styles.nftImage}
+                  unoptimized={
+                    nft_data.image.startsWith('ipfs://') ||
+                    !nft_data.image.startsWith('http')
+                  }
+                />
+              </div>
+              <h2 className={styles.nftName}>{nft_data.name}</h2>
+              <p className={styles.nftDescription}>{nft_data.description}</p>
+              <ul className={styles.attributesList}>
+                {nft_data.attributes.map((attr) => (
+                  <li key={attr.trait_type} className={styles.attributeItem}>
+                    <strong>{attr.trait_type}:</strong> {attr.value}
+                  </li>
+                ))}
+              </ul>
+
+              {/* OpenSea Link */}
+              <a
+                href={openseaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.openseaLink}
+              >
+                <Image
+                  src="/opensea.png"
+                  alt="OpenSea Logo"
+                  width={24}
+                  height={24}
+                  className={styles.openseaLogo}
+                />
+                <span className={styles.openseaText}>Open NFT in OpenSea</span>
+              </a>
             </div>
-            <h2 className={styles.nftName}>{nft_data.name}</h2>
-            <p className={styles.nftDescription}>{nft_data.description}</p>
-            <ul className={styles.attributesList}>
-              {nft_data.attributes.map((attr) => (
-                <li key={attr.trait_type} className={styles.attributeItem}>
-                  <strong>{attr.trait_type}:</strong> {attr.value}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </main>
   );
