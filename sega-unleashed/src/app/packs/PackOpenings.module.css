@@ -1,0 +1,59 @@
+/* src/app/packs/PackOpenings.module.css */
+
+/* Glassmorphic form container */
+.formGlass {
+  position: relative;
+  width: 100%;            /* smaller */
+  max-width: 900px;       /* narrower */
+  margin: 2rem auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(20px);
+  border-radius: 3rem;    /* more rounded */
+  overflow: visible;
+}
+
+.formGlass::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(
+    60deg,
+    #ff4ec137,
+    #4eafff33,
+    #4eff9e5d,
+    #ffdc4e50,
+    #ff4ec145
+  );
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite, hueShift 20s linear infinite;
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+
+/* Prevent images inside the glass container from being filtered or animated */
+.imgReset {
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Glass button */
+.btnGlass {
+  padding: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  backdrop-filter: blur(4px);
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.1s;
+  z-index: 1;
+}
+.btnGlass:hover:not(:disabled) {
+  background: rgba(255,255,255,0.3);
+  transform: translateY(-1px);
+}

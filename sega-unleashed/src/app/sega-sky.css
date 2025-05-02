@@ -1,0 +1,48 @@
+/* sega-sky.css
+ * Sega-themed super cool color gradient background
+ * - Uses vibrant Sega blues and complementary purples for depth
+ * - No external images required
+ */
+
+ body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(
+      to bottom,
+      #008dd0 0%,    /* Sega light blue */
+      #0060a8 40%,   /* Sega deep blue */
+      #4b0082 70%,   /* Indigo for contrast */
+      #000000 100%   /* Deep black at horizon */
+    );
+    overflow: hidden;
+  }
+  
+  /* Optional secondary overlay for subtle shimmer */
+  body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      circle at 50% 20%,
+      rgba(255,255,255,0.1) 0%,
+      transparent 60%
+    );
+    pointer-events: none;
+    animation: shimmer 8s ease-in-out infinite;
+  }
+  
+  @keyframes shimmer {
+    0%, 100% {
+      opacity: 0.1;
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      opacity: 0.3;
+      transform: translateY(10px) scale(1.1);
+    }
+  }

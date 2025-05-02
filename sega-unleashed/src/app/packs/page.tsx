@@ -1,10 +1,15 @@
-/* src/components/PackOpenings.tsx */
 'use client';
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DragControls } from "three/examples/jsm/controls/DragControls.js";
 import { BrowserProvider, getAddress, parseEther, TransactionResponse } from "ethers";
+import Image from "next/image";
 import ErrorMessage from "./ErrorMessage";
 import TxList from "./TxList";
+import styles from "./PackOpenings.module.css";
+import type { MetaMaskInpageProvider } from "@metamask/providers";
 
 interface PaymentHandlers {
   setError: (msg: string) => void;
@@ -13,119 +18,297 @@ interface PaymentHandlers {
 }
 
 const PACK_TIERS = [
-  { label: 'Bronze (0.01 MATIC)', amount: '0.01' },
-  { label: 'Silver (0.05 MATIC)', amount: '0.05' },
-  { label: 'Gold (0.1 MATIC)', amount: '0.1' }
+  { amount: "0",    img: "/Free.png" },
+  { amount: "0.01", img: "/BRONZE.png" },
+  { amount: "0.05", img: "/SILVER.png" },
+  { amount: "0.1",  img: "/GOLD.png" },
 ];
 
 async function startPayment({ setError, setTxs, amount }: PaymentHandlers) {
+  // Now TS knows window.ethereum is a MetaMaskInpageProvider
+  if (amount !== "0" && !window.ethereum) {
+    const err = "No crypto wallet found. Please install MetaMask.";
+    setError(err);
+    throw new Error(err);
+  }
+
   try {
-    if (!window.ethereum) throw new Error('No crypto wallet found. Please install MetaMask.');
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
-    const provider = new BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const recipient = '0xA05228D9D57Fa3D2fc3D33885Ee5E281A94100C9';
-    getAddress(recipient);
-    const tx = await signer.sendTransaction({ to: recipient, value: parseEther(amount) });
-    setTxs([tx]);
-    setError('');
+    let tx: TransactionResponse | null = null;
+
+    if (amount !== "0" && window.ethereum) {
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      const provider = new BrowserProvider(window.ethereum as unknown as MetaMaskInpageProvider);
+      const signer = await provider.getSigner();
+      const recipient = "0xA05228D9D57Fa3D2fc3D33885Ee5E281A94100C9";
+      getAddress(recipient);
+      tx = await signer.sendTransaction({ to: recipient, value: parseEther(amount) });
+      setTxs([tx]);
+    }
+
+    setError("");
     return tx;
-  } catch (err: any) {
-    setError(err.message || 'An unknown error occurred.');
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "An unknown error occurred.";
+    setError(msg);
     throw err;
   }
 }
 
 export default function PackOpenings() {
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [txs, setTxs] = useState<TransactionResponse[]>([]);
-  const [packs, setPacks] = useState<number[][]>([]);
   const [selectedTier, setSelectedTier] = useState(PACK_TIERS[0].amount);
   const [mintedIds, setMintedIds] = useState<number[]>([]);
+  const mountRef = useRef<HTMLDivElement>(null);
+  const [buyHover, setBuyHover] = useState(false);
+
+  useEffect(() => {
+    const mountNode = mountRef.current;
+    if (!mountNode) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    const initialPos = { x: -20.86, y: 25.02, z: 27 };
+    const radius = Math.hypot(initialPos.x, initialPos.y, initialPos.z);
+    let theta = Math.atan2(initialPos.z, initialPos.x);
+    let phi = Math.acos(initialPos.y / radius);
+
+    const updateCameraPos = () => {
+      camera.position.set(
+        radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+      );
+      camera.lookAt(0, 0, 0);
+    };
+    updateCameraPos();
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    mountNode.innerHTML = '';
+    mountNode.appendChild(renderer.domElement);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    dirLight.position.set(0, 10, 0);
+    scene.add(dirLight);
+
+    const loader = new GLTFLoader();
+    const draggable: THREE.Object3D[] = [];
+
+    loader.load(
+      "/low_poly_mine_cave.glb",
+      (gltf) => {
+        const modelRoot = gltf.scene;
+        modelRoot.scale.set(2, 2, 2);
+        scene.add(modelRoot);
+
+        modelRoot.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            draggable.push(child);
+          }
+        });
+
+        const controls = new DragControls(draggable, camera, renderer.domElement);
+
+        controls.addEventListener("dragstart", (e) => {
+          const mesh = e.object as THREE.Mesh;
+          const mat = mesh.material as THREE.Material & {
+            transparent: boolean;
+            opacity: number;
+          };
+          mat.transparent = true;
+          mat.opacity = 0.7;
+        });
+        controls.addEventListener("dragend", (e) => {
+          const mesh = e.object as THREE.Mesh;
+          const mat = mesh.material as THREE.Material & {
+            transparent: boolean;
+            opacity: number;
+          };
+          mat.opacity = 1;
+          mat.transparent = false;
+        });
+      },
+      undefined,
+      (err) => console.error("Error loading GLB:", err)
+    );
+
+    let speedH = 0, speedV = 0;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'ArrowLeft') speedH = 0.02;
+      if (e.code === 'ArrowRight') speedH = -0.02;
+      if (e.code === 'ArrowUp') speedV = 0.02;
+      if (e.code === 'ArrowDown') speedV = -0.02;
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (['ArrowLeft','ArrowRight'].includes(e.code)) speedH = 0;
+      if (['ArrowUp','ArrowDown'].includes(e.code)) speedV = 0;
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      theta += speedH;
+      phi = Math.min(Math.max(0.1, phi + speedV), Math.PI - 0.1);
+      updateCameraPos();
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const onResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('resize', onResize);
+      mountNode.innerHTML = '';
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setTxs([]);
     setMintedIds([]);
 
     try {
       const tx = await startPayment({ setError, setTxs, amount: selectedTier });
 
-      // Generate and display pack
-      const newPack = Array.from({ length: 5 }, () => Math.floor(Math.random() * 100));
-      setPacks(prev => [...prev, newPack]);
+      const tierLabel =
+        selectedTier === '0'    ? 'Free' :
+        selectedTier === '0.01' ? 'Bronze' :
+        selectedTier === '0.05' ? 'Silver' : 'Gold';
 
-      // Prepare JSON payload for server
-      const payload = {
-        recipient: tx.from,
-        traits: {
-          packType: selectedTier === '0.01' ? 'Bronze'
-                   : selectedTier === '0.05' ? 'Silver'
-                   : 'Gold'
-        }
-      };
-
-      // Send JSON request to server
-      const response = await fetch('http://20.117.181.22:5111/mint', {
+      const res = await fetch('http://20.117.181.22:5111/mint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ recipient: tx?.from, traits: { packType: tierLabel } }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Mint request failed');
-      }
-
-      // Parse minted token IDs and display
-      const ids: number[] = await response.json();
+      if (!res.ok) throw new Error((await res.json()).error || 'Mint failed');
+      const ids: number[] = await res.json();
       setMintedIds(ids);
-
     } catch {
-      // Error already handled
+      // error displayed via setError
     }
   };
 
   return (
-    <form className="m-4" onSubmit={handleSubmit}>
-      <div className="credit-card w-full lg:w-1/2 sm:w-auto shadow-lg mx-auto rounded-xl bg-white">
-        <main className="mt-4 p-4">
-          <h1 className="text-xl font-semibold text-gray-700 text-center">Open a Pack</h1>
-          <div className="mt-4">
-            {PACK_TIERS.map(tier => (
-              <label key={tier.amount} className="flex items-center space-x-2 mb-2">
-                <input
-                  type="radio"
-                  name="packTier"
-                  value={tier.amount}
-                  checked={selectedTier === tier.amount}
-                  onChange={() => setSelectedTier(tier.amount)}
-                  className="form-radio"
+    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+      <div
+        ref={mountRef}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+      />
+
+      <form
+        onSubmit={handleSubmit}
+        className={styles.formGlass}
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 10,
+        }}
+      >
+        <div className="text-glass" style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "1rem" }}>
+            {PACK_TIERS.map((tier) => (
+              <button
+                key={tier.amount + tier.img}
+                type="button"
+                onClick={() => setSelectedTier(tier.amount)}
+                className={styles.btnGlass}
+                style={{ width: "140px", height: "140px", padding: 0 }}
+              >
+                <Image
+                  src={tier.img}
+                  alt={`${tier.amount} ETH pack`}
+                  className={styles.imgReset}
+                  width={140}
+                  height={140}
+                  style={{
+                    objectFit: "contain",
+                    opacity: selectedTier === tier.amount ? 1 : 0.5,
+                  }}
+                  priority
                 />
-                <span className="text-gray-600">{tier.label}</span>
-              </label>
+              </button>
             ))}
           </div>
-        </main>
-        <footer className="p-4">
-          <button type="submit" className="btn btn-primary w-full">Open Pack</button>
+        </div>
+
+        <div style={{ textAlign: "center" }}>
+          <button
+            type="submit"
+            className={styles.btnGlass}
+            onMouseEnter={() => setBuyHover(true)}
+            onMouseLeave={() => setBuyHover(false)}
+            style={{ marginBottom: "1rem" }}
+          >
+            <Image
+              src={buyHover ? "/Buy-Pack.png" : "/Buy-a-Pack.png"}
+              alt="Buy a Pack"
+              width={240}
+              height={80}
+              className={styles.imgReset}
+              priority
+            />
+          </button>
+
           <ErrorMessage message={error} />
           <TxList txs={txs} />
-          {mintedIds.length > 0 && (
-            <div className="mt-4 p-2 border rounded bg-gray-50">
-              <strong>Minted Token IDs:</strong> {mintedIds.join(', ')}
+
+          {txs.length > 0 && (
+            <div className="text-glass" style={{ marginTop: "1rem", textAlign: "left" }}>
+              <strong>Transaction Hash:</strong>
+              <div style={{ marginTop: "0.5rem" }}>
+                <a
+                  href={`https://polygonscan.com/tx/${txs[0].hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-glass"
+                  style={{
+                    textDecoration: "underline",
+                    wordBreak: "break-all",
+                    pointerEvents: "auto",
+                  }}
+                >
+                  https://polygonscan.com/tx/{txs[0].hash}
+                </a>
+              </div>
             </div>
           )}
-          <div className="mt-4 space-y-2">
-            {packs.map((pack, i) => (
-              <div key={i} className="p-2 border rounded">
-                <strong>Pack {i + 1} ({pack.length} items):</strong> {pack.join(', ')}
-              </div>
-            ))}
-          </div>
-        </footer>
-      </div>
-    </form>
+
+          {mintedIds.length > 0 && (
+            <div
+              className="text-glass"
+              style={{
+                marginTop: "1rem",
+                padding: "0.5rem",
+                border: "1px solid rgba(255,255,255,0.4)",
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.1)",
+              }}
+            >
+              <strong>Minted Token IDs:</strong> {mintedIds.join(", ")}
+            </div>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

@@ -1,0 +1,72 @@
+/* components/nft_characters.module.css */
+.mainContainer {
+  margin-top: 80px;
+  min-height: calc(100vh - 80px);
+  padding: 1rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.nftGrid {
+  display: grid;
+  /* pack as many 180px-wide columns as will fit */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.nftCard {
+  /* (same as before) */
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.nftCard:hover {
+  transform: translateY(-4px);
+}
+
+.nftImage {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.nftName {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.nftDescription {
+  font-size: 0.9rem;
+  color: #f0f0f0;
+  text-align: center;
+}
+
+.attributesList {
+  list-style: none;
+  padding: 0;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.attributeItem {
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  color: #e0e0e0;
+}

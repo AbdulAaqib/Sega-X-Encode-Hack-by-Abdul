@@ -16,7 +16,7 @@ const TxList: React.FC<TxListProps> = ({ txs }) => {
       {txs.map((tx) => (
         <div key={tx.hash} className="alert alert-info mt-5">
           <div className="flex-1">
-            <label>{tx.hash}</label>
+            
           </div>
         </div>
       ))}
