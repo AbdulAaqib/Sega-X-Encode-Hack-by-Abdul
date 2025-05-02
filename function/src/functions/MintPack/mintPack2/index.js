@@ -8,13 +8,13 @@ const { createClient } = require("@supabase/supabase-js");
 const hre      = require("hardhat");
 
 // Hardcoded credentials and settings
-const PINATA_API_KEY        = "6ce4fd653d6458fa8bc6";
-const PINATA_SECRET_API_KEY = "f9de446bb998f36fcc62e5e38593489037889a96a5cf850231e3733b6c199676";
-const SUPABASE_URL          = "https://ggiievredpxistkndfuw.supabase.co";
-const SUPABASE_KEY          = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-const POLYGON_MUMBAI_RPC_URL = "https://polygon-mainnet.infura.io/v3/0006bbd7c83346e79019f7fbdd74fde5";
-const PRIVATE_KEY           = "ca53f115c234ce09c26f14dc1170fc1769d6b0db3489bcb1f4761b6145223edd";
-const CONTRACT_ADDRESS      = "0xa23869069bc8079B74a03eb62806D6e2E892D9Fe";
+const PINATA_API_KEY        = "";
+const PINATA_SECRET_API_KEY = "";
+const SUPABASE_URL          = "";
+const SUPABASE_KEY          = "...";
+const POLYGON_MUMBAI_RPC_URL = "";
+const PRIVATE_KEY           = "";
+const CONTRACT_ADDRESS      = "";
 
 // Resolve directories relative to this file
 const IMAGES_DIR   = path.resolve(__dirname, "../final_images");
