@@ -7,6 +7,9 @@
 ## Project Overview
 
 A decentralized, narrative-driven trading card web game combining NFTs on Polygon with ChatGPT-powered storytelling. Players mint randomized character packs, own verifiable on-chain assets, and engage in dynamic GPT-based battles for an ever-evolving play experience.
+https://sega-x-encode-hack-by-abdul.vercel.app/
+![SEGA Unleashed Gameplay](./SEGA-UNLEASHED-gif.gif)
+
 
 ## Table of Contents
 
