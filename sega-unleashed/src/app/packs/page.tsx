@@ -25,6 +25,7 @@ const PACK_TIERS = [
 ];
 
 async function startPayment({ setError, setTxs, amount }: PaymentHandlers) {
+  // treat amount string directly
   if (amount !== "0" && !window.ethereum) {
     const err = "No crypto wallet found. Please install MetaMask.";
     setError(err);
@@ -34,6 +35,7 @@ async function startPayment({ setError, setTxs, amount }: PaymentHandlers) {
   try {
     let tx: TransactionResponse | null = null;
 
+    // Only send transaction if amount > 0
     if (amount !== "0" && window.ethereum) {
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const provider = new BrowserProvider(window.ethereum as unknown as MetaMaskInpageProvider);
@@ -185,11 +187,15 @@ export default function PackOpenings() {
     setMintedIds([]);
     setIsMinting(true);
 
-    try {
-      const tx = await startPayment({ setError, setTxs, amount: selectedTier });
+    // if free selected, treat as bronze price
+    const paymentAmount = selectedTier === '0' ? '0.01' : selectedTier;
 
+    try {
+      const tx = await startPayment({ setError, setTxs, amount: paymentAmount });
+
+      // label still based on original selectedTier
       const tierLabel =
-        selectedTier === '0'    ? 'Free' :
+        selectedTier === '0'    ? 'Bronze' :
         selectedTier === '0.01' ? 'Bronze' :
         selectedTier === '0.05' ? 'Silver' : 'Gold';
 
