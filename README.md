@@ -1,5 +1,5 @@
 # Sega X Encode Hack by Abdul
- 
+ ![Sega Unleashed GIF](Sega-X-Encode-Hack-by-Abdul/SEGA-UNLEASHED-gif.gif)
 <!-- Badges -->
 
 [![Release](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/yourusername/your-repo/releases) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE) [![Built with Next.js](https://img.shields.io/badge/built%20with-Next.js-black?logo=next.js)](https://nextjs.org/) [![Polygon](https://img.shields.io/badge/blockchain-Polygon-purple)](https://polygon.technology/)
