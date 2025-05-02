@@ -25,7 +25,6 @@ const PACK_TIERS = [
 ];
 
 async function startPayment({ setError, setTxs, amount }: PaymentHandlers) {
-  // Now TS knows window.ethereum is a MetaMaskInpageProvider
   if (amount !== "0" && !window.ethereum) {
     const err = "No crypto wallet found. Please install MetaMask.";
     setError(err);
@@ -59,6 +58,7 @@ export default function PackOpenings() {
   const [txs, setTxs] = useState<TransactionResponse[]>([]);
   const [selectedTier, setSelectedTier] = useState(PACK_TIERS[0].amount);
   const [mintedIds, setMintedIds] = useState<number[]>([]);
+  const [isMinting, setIsMinting] = useState<boolean>(false);
   const mountRef = useRef<HTMLDivElement>(null);
   const [buyHover, setBuyHover] = useState(false);
 
@@ -183,6 +183,7 @@ export default function PackOpenings() {
     setError("");
     setTxs([]);
     setMintedIds([]);
+    setIsMinting(true);
 
     try {
       const tx = await startPayment({ setError, setTxs, amount: selectedTier });
@@ -203,6 +204,8 @@ export default function PackOpenings() {
       setMintedIds(ids);
     } catch {
       // error displayed via setError
+    } finally {
+      setIsMinting(false);
     }
   };
 
@@ -258,15 +261,20 @@ export default function PackOpenings() {
             onMouseEnter={() => setBuyHover(true)}
             onMouseLeave={() => setBuyHover(false)}
             style={{ marginBottom: "1rem" }}
+            disabled={isMinting}
           >
-            <Image
-              src={buyHover ? "/Buy-Pack.png" : "/Buy-a-Pack.png"}
-              alt="Buy a Pack"
-              width={240}
-              height={80}
-              className={styles.imgReset}
-              priority
-            />
+            {isMinting ? (
+              <span className="text-glass">Minting NFTs...</span>
+            ) : (
+              <Image
+                src={buyHover ? "/Buy-Pack.png" : "/Buy-a-Pack.png"}
+                alt="Buy a Pack"
+                width={240}
+                height={80}
+                className={styles.imgReset}
+                priority
+              />
+            )}
           </button>
 
           <ErrorMessage message={error} />
