@@ -19,7 +19,7 @@ https://sega-x-encode-hack-by-abdul.vercel.app
 ![oaicite:18](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![oaicite:20](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![oaicite:22](https://img.shields.io/badge/Solidity-e6e6e6?style=for-the-badge&logo=solidity&logoColor=black)
-![oaicite:22](https://img.shields.io/badge/Solidity-e6e6e6?style=for-the-badge&logo=solidity&logoColor=black)
+
 
 
 ![oaicite:22](https://github.com/AbdulAaqib/Sega-X-Encode-Hack-by-Abdul/blob/main/Comfyui.png?raw=true)
