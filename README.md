@@ -11,6 +11,25 @@ A decentralized, narrative-driven trading card web game combining NFTs on Polygo
 
 https://sega-x-encode-hack-by-abdul.vercel.app
 
+![oaicite:6](https://img.shields.io/badge/Ethereum-3C3C3D?style=for-the-badge&logo=Ethereum&logoColor=white)
+![oaicite:6](https://img.shields.io/badge/microsoft%20azure-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white)
+![oaicite:12](https://img.shields.io/badge/web3%20js-F16822?style=for-the-badge&logo=web3.js&logoColor=white)
+![oaicite:14](https://img.shields.io/badge/Supabase-181818?style=for-the-badge&logo=supabase&logoColor=white)
+![oaicite:16](https://img.shields.io/badge/next%20js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![oaicite:18](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![oaicite:20](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![oaicite:22](https://img.shields.io/badge/Solidity-e6e6e6?style=for-the-badge&logo=solidity&logoColor=black)
+![oaicite:22](https://img.shields.io/badge/Solidity-e6e6e6?style=for-the-badge&logo=solidity&logoColor=black)
+
+
+![oaicite:22](https://github.com/AbdulAaqib/Sega-X-Encode-Hack-by-Abdul/blob/main/Comfyui.png?raw=true)
+
+![oaicite:22](https://github.com/AbdulAaqib/Sega-X-Encode-Hack-by-Abdul/blob/main/metamask.png?raw=true)
+
+![oaicite:22](https://github.com/Junaid2005/keychain-app/blob/main/polygon.png?raw=true)
+
+
+
 ## Table of Contents
 
 * [Problem Statement](#problem-statement)
@@ -30,22 +49,22 @@ https://sega-x-encode-hack-by-abdul.vercel.app
 
 ## Problem Statement
 
-Traditional digital trading-card games lock ownership within centralized servers, hindering peer-to-peer markets and real asset value exchange. Gameplay often lacks dynamic narrative guidance, making onboarding steep for new players, and counterfeit cards pose authenticity risks.citeturn0search3
+Traditional digital trading-card games lock ownership within centralized servers, hindering peer-to-peer markets and real asset value exchange. Gameplay often lacks dynamic narrative guidance, making onboarding steep for new players, and counterfeit cards pose authenticity risks.
 
 ## Target Audience
 
 * **Collectors & Traders** seeking provable digital ownership and open-market liquidity.
-* **Casual Gamers** desiring narrative-driven progression with personalized guidance.citeturn0search6
+* **Casual Gamers** desiring narrative-driven progression with personalized guidance.
 * **Web3 Enthusiasts** looking for engaging on-chain experiences beyond pure finance apps.
 
 ## Solution
 
-We deliver a web game where each “card pack” is an NFT mint transaction on Polygon, blending blockchain verifiability with GPT-4-driven storytelling. A ChatGPT API integration serves as in-game tutor and narrator, adapting to player skill and choices for replayability.citeturn0search0turn0search1
+We deliver a web game where each “card pack” is an NFT mint transaction on Polygon, blending blockchain verifiability with GPT-4-driven storytelling. A ChatGPT API integration serves as in-game tutor and narrator, adapting to player skill and choices for replayability.
 
 ## Features
 
-* **True Ownership**: NFTs minted via `safeMint()` on a Solidity contract; metadata hosted on IPFS/Pinata. Secondary trading enabled on OpenSea.citeturn0search2
-* **Dynamic Onboarding**: GPT-guided tutorials and flavor text adapt to user queries.citeturn0search6
+* **True Ownership**: NFTs minted via `safeMint()` on a Solidity contract; metadata hosted on IPFS/Pinata. Secondary trading enabled on OpenSea.
+* **Dynamic Onboarding**: GPT-guided tutorials and flavor text adapt to user queries.
 * **Replayable Economy**: Randomized NFT packs sustain secondary markets and organic growth.
 * **Narrative Battles**: ChatGPT “Game Master” crafts unique battle logs and events per match.
 
@@ -53,7 +72,7 @@ We deliver a web game where each “card pack” is an NFT mint transaction on P
 
 ### Frontend
 
-* Next.js + React + TypeScript for UI and routing.citeturn0search3
+* Next.js + React + TypeScript for UI and routing.
 * Three.js for animated card-battle scenes.
 * Vercel deployment for global edge performance.
 * Wallet auth via MetaMask and ethers.js.
@@ -70,11 +89,11 @@ We deliver a web game where each “card pack” is an NFT mint transaction on P
 ### Database & Storage
 
 * Supabase (Postgres) tables: `user_data`, `nft_data`.
-* IPFS via Pinata for metadata JSON (images, attributes, lore links).citeturn0search4
+* IPFS via Pinata for metadata JSON (images, attributes, lore links).
 
 ### Blockchain
 
-* Solidity contract on Polygon with `safeMint()` and metadata URI pointer.citeturn0search7
+* Solidity contract on Polygon with `safeMint()` and metadata URI pointer.
 
 ### AI Integration
 
@@ -118,7 +137,7 @@ npm run dev
 
 ## Challenges & Learnings
 
-* **Solidity Edge Cases**: Implemented reentrancy guards and learned rigorous on-chain testing.citeturn0search12
+* **Solidity Edge Cases**: Implemented reentrancy guards and learned rigorous on-chain testing.
 * **TypeScript Rigidity**: Built custom type wrappers for ethers.js and Supabase, improving DX.
 * **Three.js Performance**: Profiled and optimized scenes for frame-rate consistency on low-end devices.
 * **Schema Migrations**: Employed shadow columns and atomic switchovers for zero-downtime migrations.
